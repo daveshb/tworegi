@@ -1,26 +1,159 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "tailwindcss";
+@plugin '../../hero.ts';
+/* Note: You may need to change the path to fit your project structure */
+@source '../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 98%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 173 80% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
+    --radius: 0.5rem;
+
+    /* Custom design tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%), hsl(221 83% 63%));
+    --gradient-accent: linear-gradient(135deg, hsl(173 80% 40%), hsl(173 80% 50%));
+    --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elevated: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 221 83% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 221 83% 53%;
+
+  }
+
+  .dark {
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
+    --card: 222 38% 15%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 38% 15%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 173 80% 40%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 173 80% 40%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 221 83% 53%;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  /* Custom gradient backgrounds with exact colors */
+  .bg-voting-gradient {
+    background: linear-gradient(to bottom right, 
+      hsl(221 83% 53% / 0.05), 
+      hsl(0 0% 98%), 
+      hsl(173 80% 40% / 0.05)
+    );
+  }
+
+  .bg-logo-gradient {
+    background: linear-gradient(to bottom right, 
+      hsl(221 83% 53%), 
+      hsl(221 83% 53% / 0.8)
+    );
+  }
+
+  .bg-title-gradient {
+    background: linear-gradient(to right, 
+      hsl(221 83% 53%), 
+      hsl(173 80% 40%)
+    );
+  }
+
+  .bg-button-gradient {
+    background: linear-gradient(to right, 
+      hsl(221 83% 53%), 
+      hsl(221 83% 53% / 0.8)
+    );
+  }
+
+  .bg-cta-gradient {
+    background: linear-gradient(to right, 
+      hsl(221 83% 53%), 
+      hsl(173 80% 40%)
+    );
+  }
+
+  .bg-primary-10 {
+    background-color: hsl(221 83% 53% / 0.1);
+  }
+
+  .bg-card-50 {
+    background-color: hsl(var(--card) / 0.5);
+  }
+
+  .hover\:bg-white-90:hover {
+    background-color: hsl(0 0% 100% / 0.9);
+  }
+
+  .bg-secondary\/10 {
+    background-color: hsl(173 80% 40% / 0.1);
+  }
+
+  .bg-linear-to-br {
+    background-image: linear-gradient(to bottom right, var(--tw-gradient-stops));
+  }
+
+  .bg-linear-to-r {
+    background-image: linear-gradient(to right, var(--tw-gradient-stops));
+  }
+
+  .bg-clip-text {
+    background-clip: text;
+    -webkit-background-clip: text;
+  }
+
+  .text-transparent {
+    color: transparent;
+  }
+
+  /* Support for backdrop-filter */
+  .supports-backdrop-filter\:bg-card\/50 {
+    background-color: hsl(var(--card) / 0.5);
+    backdrop-filter: blur(10px);
+  }
 }
