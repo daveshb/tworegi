@@ -5,7 +5,7 @@
     "joinDate": "2024-01-15",
     "electoralZone": "Zone 1",
     "email": "juan.garcia@example.com",
-    "cellPhone": "+573001234567",
+    "cellPhone": "3001234567",
     "isActive": true,
     "password": "4827"
   },
@@ -15,7 +15,7 @@
     "joinDate": "2024-02-10",
     "electoralZone": "Zone 2",
     "email": "maria.gonzalez@example.com",
-    "cellPhone": "+573001234568",
+    "cellPhone": "3001234568",
     "isActive": true,
     "password": "5921"
   },
@@ -25,7 +25,7 @@
     "joinDate": "2024-03-05",
     "electoralZone": "Zone 3",
     "email": "carlos.martinez@example.com",
-    "cellPhone": "+573001234569",
+    "cellPhone": "3001234569",
     "isActive": false,
     "password": "3456"
   },
@@ -35,7 +35,7 @@
     "joinDate": "2024-04-20",
     "electoralZone": "Zone 4",
     "email": "ana.perez@example.com",
-    "cellPhone": "+573001234570",
+    "cellPhone": "3001234570",
     "isActive": true,
     "password": "7834"
   },
@@ -45,7 +45,7 @@
     "joinDate": "2024-05-12",
     "electoralZone": "Zone 5",
     "email": "luis.hernandez@example.com",
-    "cellPhone": "+573001234571",
+    "cellPhone": "3001234571",
     "isActive": true,
     "password": "2945"
   },
@@ -55,7 +55,7 @@
     "joinDate": "2024-06-08",
     "electoralZone": "Zone 6",
     "email": "sandra.lopez@example.com",
-    "cellPhone": "+573001234572",
+    "cellPhone": "3001234572",
     "isActive": false,
     "password": "6173"
   },
@@ -65,7 +65,7 @@
     "joinDate": "2024-07-22",
     "electoralZone": "Zone 1",
     "email": "jorge.ramirez@example.com",
-    "cellPhone": "+573001234573",
+    "cellPhone": "3001234573",
     "isActive": true,
     "password": "8159"
   },
@@ -75,7 +75,7 @@
     "joinDate": "2024-08-14",
     "electoralZone": "Zone 2",
     "email": "patricia.sanchez@example.com",
-    "cellPhone": "+573001234574",
+    "cellPhone": "3001234574",
     "isActive": true,
     "password": "4627"
   },
@@ -85,7 +85,7 @@
     "joinDate": "2024-09-03",
     "electoralZone": "Zone 3",
     "email": "miguel.gutierrez@example.com",
-    "cellPhone": "+573001234575",
+    "cellPhone": "3001234575",
     "isActive": true,
     "password": "9274"
   },
@@ -95,7 +95,7 @@
     "joinDate": "2024-10-18",
     "electoralZone": "Zone 4",
     "email": "rosa.vargas@example.com",
-    "cellPhone": "+573001234576",
+    "cellPhone": "3001234576",
     "isActive": false,
     "password": "5638"
   },
@@ -105,7 +105,7 @@
     "joinDate": "2024-11-09",
     "electoralZone": "Zone 5",
     "email": "david.ortiz@example.com",
-    "cellPhone": "+573001234577",
+    "cellPhone": "3001234577",
     "isActive": true,
     "password": "3791"
   },
@@ -115,7 +115,7 @@
     "joinDate": "2024-12-01",
     "electoralZone": "Zone 6",
     "email": "isabel.reyes@example.com",
-    "cellPhone": "+573001234578",
+    "cellPhone": "3001234578",
     "isActive": true,
     "password": "7482"
   },
@@ -125,7 +125,7 @@
     "joinDate": "2025-01-10",
     "electoralZone": "Zone 1",
     "email": "antonio.torres@example.com",
-    "cellPhone": "+573001234579",
+    "cellPhone": "3001234579",
     "isActive": true,
     "password": "2156"
   },
@@ -135,7 +135,7 @@
     "joinDate": "2025-01-11",
     "electoralZone": "Zone 2",
     "email": "mercedes.nunez@example.com",
-    "cellPhone": "+573001234580",
+    "cellPhone": "3001234580",
     "isActive": false,
     "password": "8934"
   },
@@ -145,7 +145,7 @@
     "joinDate": "2025-01-12",
     "electoralZone": "Zone 3",
     "email": "fernando.rivera@example.com",
-    "cellPhone": "+573001234581",
+    "cellPhone": "3001234581",
     "isActive": true,
     "password": "4561"
   },
@@ -155,7 +155,7 @@
     "joinDate": "2025-01-13",
     "electoralZone": "Zone 4",
     "email": "beatriz.silva@example.com",
-    "cellPhone": "+573001234582",
+    "cellPhone": "3001234582",
     "isActive": true,
     "password": "6789"
   },
@@ -165,7 +165,7 @@
     "joinDate": "2025-01-13",
     "electoralZone": "Zone 5",
     "email": "enrique.medina@example.com",
-    "cellPhone": "+573001234583",
+    "cellPhone": "3001234583",
     "isActive": true,
     "password": "9102"
   },
@@ -175,7 +175,7 @@
     "joinDate": "2025-01-14",
     "electoralZone": "Zone 6",
     "email": "cristina.jimenez@example.com",
-    "cellPhone": "+573001234584",
+    "cellPhone": "3001234584",
     "isActive": true,
     "password": "5643"
   },
@@ -185,7 +185,7 @@
     "joinDate": "2025-01-14",
     "electoralZone": "Zone 1",
     "email": "ricardo.marin@example.com",
-    "cellPhone": "+573001234585",
+    "cellPhone": "3001234585",
     "isActive": false,
     "password": "3847"
   },
@@ -195,7 +195,7 @@
     "joinDate": "2025-01-14",
     "electoralZone": "Zone 2",
     "email": "lorena.fuentes@example.com",
-    "cellPhone": "+573001234586",
+    "cellPhone": "3001234586",
     "isActive": true,
     "password": "7251"
   }
