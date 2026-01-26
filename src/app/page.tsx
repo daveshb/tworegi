@@ -17,7 +17,7 @@ const Index = () => {
             <div className="w-10 h-10 bg-logo-gradient rounded-lg flex items-center justify-center">
               <Vote className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold">TwoRegi</span>
+            <span className="text-xl font-bold">TwoRegistro</span>
           </div>
           <Button onClick={() => router.push("/login")} variant="outline">
             Iniciar Sesión
@@ -96,7 +96,7 @@ const Index = () => {
         <div className="bg-cta-gradient rounded-2xl p-12 text-center text-white">
           <h2 className="text-3xl font-bold mb-4">¿Listo para modernizar tu proceso de votación?</h2>
           <p className="text-lg mb-8 opacity-90">
-            Únete a las organizaciones que confían en TwoRegi para elecciones seguras y transparentes
+            Únete a las organizaciones que confían en TwoRegistro para elecciones seguras y transparentes
           </p>
           <Button
             size="lg"
@@ -111,7 +111,7 @@ const Index = () => {
       {/* Footer */}
       <footer className="border-t py-8">
         <div className="container mx-auto px-4 text-center text-muted-foreground">
-          <p>&copy; 2025 TwoRegi. Construido con seguridad y transparencia en mente.</p>
+          <p>&copy; 2025 TwoRegistro. Construido con seguridad y transparencia en mente.</p>
         </div>
       </footer>
     </div>

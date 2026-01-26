@@ -1,0 +1,202 @@
+[
+  {
+    "fullName": "Juan García López",
+    "cedula": "1234567890",
+    "joinDate": "2024-01-15",
+    "electoralZone": "Zone 1",
+    "email": "juan.garcia@example.com",
+    "cellPhone": "+573001234567",
+    "isActive": true,
+    "password": "4827"
+  },
+  {
+    "fullName": "María González Rodríguez",
+    "cedula": "1234567891",
+    "joinDate": "2024-02-10",
+    "electoralZone": "Zone 2",
+    "email": "maria.gonzalez@example.com",
+    "cellPhone": "+573001234568",
+    "isActive": true,
+    "password": "5921"
+  },
+  {
+    "fullName": "Carlos Martínez Silva",
+    "cedula": "1234567892",
+    "joinDate": "2024-03-05",
+    "electoralZone": "Zone 3",
+    "email": "carlos.martinez@example.com",
+    "cellPhone": "+573001234569",
+    "isActive": false,
+    "password": "3456"
+  },
+  {
+    "fullName": "Ana Pérez Mendoza",
+    "cedula": "1234567893",
+    "joinDate": "2024-04-20",
+    "electoralZone": "Zone 4",
+    "email": "ana.perez@example.com",
+    "cellPhone": "+573001234570",
+    "isActive": true,
+    "password": "7834"
+  },
+  {
+    "fullName": "Luis Hernández Gómez",
+    "cedula": "1234567894",
+    "joinDate": "2024-05-12",
+    "electoralZone": "Zone 5",
+    "email": "luis.hernandez@example.com",
+    "cellPhone": "+573001234571",
+    "isActive": true,
+    "password": "2945"
+  },
+  {
+    "fullName": "Sandra López Fernández",
+    "cedula": "1234567895",
+    "joinDate": "2024-06-08",
+    "electoralZone": "Zone 6",
+    "email": "sandra.lopez@example.com",
+    "cellPhone": "+573001234572",
+    "isActive": false,
+    "password": "6173"
+  },
+  {
+    "fullName": "Jorge Ramírez Castro",
+    "cedula": "1234567896",
+    "joinDate": "2024-07-22",
+    "electoralZone": "Zone 1",
+    "email": "jorge.ramirez@example.com",
+    "cellPhone": "+573001234573",
+    "isActive": true,
+    "password": "8159"
+  },
+  {
+    "fullName": "Patricia Sánchez Flores",
+    "cedula": "1234567897",
+    "joinDate": "2024-08-14",
+    "electoralZone": "Zone 2",
+    "email": "patricia.sanchez@example.com",
+    "cellPhone": "+573001234574",
+    "isActive": true,
+    "password": "4627"
+  },
+  {
+    "fullName": "Miguel Gutiérrez Díaz",
+    "cedula": "1234567898",
+    "joinDate": "2024-09-03",
+    "electoralZone": "Zone 3",
+    "email": "miguel.gutierrez@example.com",
+    "cellPhone": "+573001234575",
+    "isActive": true,
+    "password": "9274"
+  },
+  {
+    "fullName": "Rosa Vargas Morales",
+    "cedula": "1234567899",
+    "joinDate": "2024-10-18",
+    "electoralZone": "Zone 4",
+    "email": "rosa.vargas@example.com",
+    "cellPhone": "+573001234576",
+    "isActive": false,
+    "password": "5638"
+  },
+  {
+    "fullName": "David Ortiz Ruiz",
+    "cedula": "1234567900",
+    "joinDate": "2024-11-09",
+    "electoralZone": "Zone 5",
+    "email": "david.ortiz@example.com",
+    "cellPhone": "+573001234577",
+    "isActive": true,
+    "password": "3791"
+  },
+  {
+    "fullName": "Isabel Reyes Domínguez",
+    "cedula": "1234567901",
+    "joinDate": "2024-12-01",
+    "electoralZone": "Zone 6",
+    "email": "isabel.reyes@example.com",
+    "cellPhone": "+573001234578",
+    "isActive": true,
+    "password": "7482"
+  },
+  {
+    "fullName": "Antonio Torres Jiménez",
+    "cedula": "1234567902",
+    "joinDate": "2025-01-10",
+    "electoralZone": "Zone 1",
+    "email": "antonio.torres@example.com",
+    "cellPhone": "+573001234579",
+    "isActive": true,
+    "password": "2156"
+  },
+  {
+    "fullName": "Mercedes Núñez Castillo",
+    "cedula": "1234567903",
+    "joinDate": "2025-01-11",
+    "electoralZone": "Zone 2",
+    "email": "mercedes.nunez@example.com",
+    "cellPhone": "+573001234580",
+    "isActive": false,
+    "password": "8934"
+  },
+  {
+    "fullName": "Fernando Rivera Medina",
+    "cedula": "1234567904",
+    "joinDate": "2025-01-12",
+    "electoralZone": "Zone 3",
+    "email": "fernando.rivera@example.com",
+    "cellPhone": "+573001234581",
+    "isActive": true,
+    "password": "4561"
+  },
+  {
+    "fullName": "Beatriz Silva Montoya",
+    "cedula": "1234567905",
+    "joinDate": "2025-01-13",
+    "electoralZone": "Zone 4",
+    "email": "beatriz.silva@example.com",
+    "cellPhone": "+573001234582",
+    "isActive": true,
+    "password": "6789"
+  },
+  {
+    "fullName": "Enrique Medina Navarro",
+    "cedula": "1234567906",
+    "joinDate": "2025-01-13",
+    "electoralZone": "Zone 5",
+    "email": "enrique.medina@example.com",
+    "cellPhone": "+573001234583",
+    "isActive": true,
+    "password": "9102"
+  },
+  {
+    "fullName": "Cristina Jiménez Blanco",
+    "cedula": "1234567907",
+    "joinDate": "2025-01-14",
+    "electoralZone": "Zone 6",
+    "email": "cristina.jimenez@example.com",
+    "cellPhone": "+573001234584",
+    "isActive": true,
+    "password": "5643"
+  },
+  {
+    "fullName": "Ricardo Marín Cortés",
+    "cedula": "1234567908",
+    "joinDate": "2025-01-14",
+    "electoralZone": "Zone 1",
+    "email": "ricardo.marin@example.com",
+    "cellPhone": "+573001234585",
+    "isActive": false,
+    "password": "3847"
+  },
+  {
+    "fullName": "Lorena Fuentes Vázquez",
+    "cedula": "1234567909",
+    "joinDate": "2025-01-14",
+    "electoralZone": "Zone 2",
+    "email": "lorena.fuentes@example.com",
+    "cellPhone": "+573001234586",
+    "isActive": true,
+    "password": "7251"
+  }
+]

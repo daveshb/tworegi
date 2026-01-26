@@ -122,7 +122,7 @@ export default function ReportsPage() {
               <BarChart3 className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">TwoRegi - Reportes</h1>
+              <h1 className="text-xl font-bold">TwoRegistro - Reportes</h1>
               <p className="text-sm text-muted-foreground">Análisis de Votaciones</p>
             </div>
           </div>
@@ -134,9 +134,31 @@ export default function ReportsPage() {
       </header>
 
       <div className="container mx-auto px-4 py-8">
+        {/* Votación de Delegados - Destacado */}
+        <div className="mb-8">
+          <div 
+            className="bg-linear-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-xl p-8 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => router.push('/reports/voting')}
+          >
+            <div className="flex items-start justify-between">
+              <div>
+                <h2 className="text-3xl font-bold mb-2">🗳️ Votación de Delegados</h2>
+                <p className="text-muted-foreground mb-4">
+                  Visualiza los votos registrados en el sistema electoral en tiempo real
+                </p>
+                <Button className="bg-button-gradient text-white">
+                  Ver Resultados de Votación
+                  <Vote className="w-4 h-4 ml-2" />
+                </Button>
+              </div>
+              <Vote className="w-16 h-16 text-primary/20" />
+            </div>
+          </div>
+        </div>
+
         {/* Filtros */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Votaciones y Reportes</h2>
+          <h2 className="text-2xl font-bold mb-4">Otras Votaciones y Reportes</h2>
           <div className="flex gap-2">
             <Button
               variant={selectedStatus === 'all' ? 'default' : 'outline'}

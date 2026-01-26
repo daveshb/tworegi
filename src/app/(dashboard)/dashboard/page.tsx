@@ -21,7 +21,7 @@ export default function DashboardPage() {
               <Vote className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">TwoRegi</h1>
+              <h1 className="text-xl font-bold">TwoRegistro</h1>
               <p className="text-sm text-muted-foreground">Panel de Administración</p>
             </div>
           </div>
@@ -81,9 +81,9 @@ export default function DashboardPage() {
             <BarChart3 className="w-4 h-4 mr-2" />
             Ver Reportes
           </Button>
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => router.push('/associates')}>
             <Users className="w-4 h-4 mr-2" />
-            Gestionar Votantes
+            Gestionar Asociados
           </Button>
           <Button variant="outline">
             <Settings className="w-4 h-4 mr-2" />

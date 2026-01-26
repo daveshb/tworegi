@@ -18,7 +18,7 @@ export const API_ENDPOINTS = {
 } as const
 
 export const APP_CONFIG = {
-  APP_NAME: "TwoRegi",
+  APP_NAME: "TwoRegistro",
   VERSION: "1.0.0",
   DESCRIPTION: "Aplicación de gestión de tareas",
 } as const
