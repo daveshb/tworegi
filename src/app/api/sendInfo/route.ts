@@ -111,14 +111,14 @@ export async function POST(request: NextRequest) {
         <body>
           <div class="container">
             <div class="header">
-              <h1>¡Candidatura Confirmada!</h1>
+              <h1>¡Postulación Confirmada!</h1>
             </div>
             <div class="content">
               <div class="greeting">
                 Hola <strong>${nombreCompleto}</strong>,
               </div>
               <p>
-                Nos complace informarte que tu candidatura ya se encuentra registrada en nuestro sistema.
+                Nos complace informarte que tu postulación ya se encuentra registrada en nuestro sistema.
               </p>
               <div class="info-box">
                 <div class="info-row">
@@ -137,9 +137,6 @@ export async function POST(request: NextRequest) {
               <div class="message">
                 <strong>✓ Tu registro como candidato(a) está activo y visible en el sistema de votación.</strong>
               </div>
-              <p style="margin-top: 30px; color: #666666;">
-                Si tienes alguna pregunta o necesitas ayuda, por favor contacta con nuestro equipo de soporte.
-              </p>
             </div>
             <div class="footer">
               <p>

@@ -387,7 +387,6 @@ const IDEntryView = ({ voterID, setVoterID, password, setPassword, showPassword,
               value={alternativeEmail}
               onChange={(e) => setAlternativeEmail(e.target.value)}
               className="text-center text-lg mb-3"
-              required
             />
 
 {/* boton azul */}
@@ -584,7 +583,7 @@ const SuccessView = ({ voterID }: { voterID: string }) => (
 
       <div className="bg-primary-10 rounded-lg p-4">
         <p className="text-sm text-primary">
-          ✅ Voto encriptado y almacenado de forma segura
+          ✅ Voto registrado exitosamente.
         </p>
         <p className="text-xs text-muted-foreground mt-2">
           Redirigiendo automáticamente en 5 segundos...

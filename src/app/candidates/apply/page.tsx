@@ -623,7 +623,7 @@ export default function ApplyCandidatePage() {
                           setFieldErrors({ ...fieldErrors, proposalDescription: undefined });
                         }
                       }}
-                      placeholder="..."
+                      placeholder="Describe aquí tu perfil como candidato(a) y tus principales intereses para representar a los asociados en la Asamblea General Foncor 2026."
                       className={`w-full px-4 py-3 border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 ${fieldErrors.proposalDescription ? 'border-red-500' : ''}`}
                       rows={4}
                       required
