@@ -1,17 +1,12 @@
 import nodemailer from "nodemailer";
 import { NextRequest, NextResponse } from "next/server";
-import twilio from "twilio";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, nombreCompleto, password, phoneNumber, tipoPostulacion, descripcion } = await request.json();
+    const { email, nombreCompleto, password, tipoPostulacion, descripcion } = await request.json();
 
     const userMail = process.env.MAIL_USER;
     const passMail = process.env.MAIL_PASS;
-    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioWhatsappNumber = process.env.TWILIO_WHATSAPP_NUMBER;
-    const twilioContentSid = process.env.TWILIO_CONTENT_SID;
 
     if (!email || !nombreCompleto || !password) {
       return NextResponse.json(
@@ -23,28 +18,12 @@ export async function POST(request: NextRequest) {
     // Enviar email
     const emailSent = await sendEmailPassword(email, nombreCompleto, password, userMail, passMail, tipoPostulacion, descripcion);
     
-    // Enviar WhatsApp si se proporciona número de teléfono
-    let whatsappSent = false;
-    if (phoneNumber && twilioAccountSid && twilioAuthToken && twilioWhatsappNumber) {
-      whatsappSent = await sendWhatsAppPassword(
-        phoneNumber,
-        nombreCompleto,
-        password,
-        twilioAccountSid,
-        twilioAuthToken,
-        twilioWhatsappNumber
-      );
-    }
-
-    const message = `Código ${emailSent ? 'enviado por email' : 'no enviado'}${whatsappSent ? ' y WhatsApp' : ''}`;
-    
     return NextResponse.json(
       { 
-        message,
-        emailSent,
-        whatsappSent
+        message: emailSent ? 'Código enviado por email' : 'Error enviando código',
+        success: emailSent
       },
-      { status: 200 }
+      { status: emailSent ? 200 : 500 }
     );
   } catch (error) {
     console.error("Error enviando código de votación:", error);
@@ -232,53 +211,3 @@ async function sendEmailPassword(
   }
 }
 
-// Función para enviar WhatsApp usando Twilio (método simple)
-async function sendWhatsAppPassword(
-  phoneNumber: string,
-  nombreCompleto: string,
-  password: string,
-  accountSid: string,
-  authToken: string,
-  twilioWhatsappNumber: string
-): Promise<boolean> {
-  try {
-    // Validar que todas las credenciales estén presentes
-    if (!accountSid || !authToken || !twilioWhatsappNumber) {
-      console.error("❌ Credenciales de Twilio incompletas:", {
-        hasSid: !!accountSid,
-        hasToken: !!authToken,
-        hasWhatsappNumber: !!twilioWhatsappNumber,
-      });
-      return false;
-    }
-
-    const client = twilio(accountSid, authToken);
-
-    // Enviar mensaje simple a WhatsApp
-    const message = `Hola ${nombreCompleto}, 👋
-
-Tu código de votación es: *${password}*
-
-📝 Por favor, ingresa este código en el sistema de votación para emitir tu voto.
-
-⚠️ Nunca compartas este código con nadie.
-
-🗳️ TwoRegistro - Sistema Electoral`;
-
-    const messageData = await client.messages.create({
-      from: twilioWhatsappNumber,
-      to: `whatsapp:${phoneNumber}`,
-      body: message,
-    });
-
-    console.log(`✅ WhatsApp enviado exitosamente. SID: ${messageData.sid}`);
-    return true;
-  } catch (error: any) {
-    console.error("❌ Error enviando WhatsApp:", {
-      message: error?.message,
-      code: error?.code,
-      status: error?.status,
-    });
-    return false;
-  }
-}

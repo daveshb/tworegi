@@ -64,7 +64,6 @@ export async function POST(request: NextRequest) {
       emailsUsedForCode: updatedAssociate.emailsUsedForCode
     });
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     const sendResults = {
       email: { success: false, error: null as string | null },
       whatsapp: { success: false, error: null as string | null }
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
     // Preparar promesas de envío
     const sendPromises = [
       // Envío de email
-      fetch(`${baseUrl}/api/sendVotingPassword`, {
+      fetch('/api/sendVotingPassword', {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -96,7 +95,7 @@ export async function POST(request: NextRequest) {
     // Solo agregar envío de WhatsApp si el asociado tiene teléfono
     if (associate.cellPhone) {
       sendPromises.push(
-        fetch(`${baseUrl}/api/sendcodews`, {
+        fetch('/api/sendcodews', {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
