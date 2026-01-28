@@ -64,6 +64,11 @@ export async function POST(request: NextRequest) {
       emailsUsedForCode: updatedAssociate.emailsUsedForCode
     });
 
+    // Determinar la URL base según el entorno
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}`
+      : process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+
     const sendResults = {
       email: { success: false, error: null as string | null },
       whatsapp: { success: false, error: null as string | null }
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest) {
     // Preparar promesas de envío
     const sendPromises = [
       // Envío de email
-      fetch('/api/sendVotingPassword', {
+      fetch(`${baseUrl}/api/sendVotingPassword`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,7 +100,7 @@ export async function POST(request: NextRequest) {
     // Solo agregar envío de WhatsApp si el asociado tiene teléfono
     if (associate.cellPhone) {
       sendPromises.push(
-        fetch('/api/sendcodews', {
+        fetch(`${baseUrl}/api/sendcodews`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
