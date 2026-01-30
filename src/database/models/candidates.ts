@@ -41,6 +41,15 @@ const candidatesSchema = new Schema({
   proposalDescription: {
     type: String,
     trim: true,
+    maxlength: [300, "Proposal description cannot exceed 300 characters"],
+  },
+  position: {
+    type: String,
+    trim: true,
+  },
+  locality: {
+    type: String,
+    trim: true,
   },
   registrationDate: {
     type: Date,

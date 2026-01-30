@@ -68,6 +68,8 @@ export async function POST(request: NextRequest) {
     const email = formData.get("email") as string;
     const cellPhone = formData.get("cellPhone") as string;
     const proposalDescription = formData.get("proposalDescription") as string;
+    const cargo = formData.get("cargo") as string;
+    const localidad = formData.get("localidad") as string;
 
     // Validar que todos los campos requeridos estén presentes
     if (!imageFile) {
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
       email,
       cellPhone,
       imageUrl,
+      position: cargo || undefined,
+      locality: localidad || undefined,
       proposalDescription: proposalDescription || undefined,
       isActive: true,
     });

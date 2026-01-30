@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Vote, AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader } from "lucide-react";
 import Image from "next/image";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import logo from "../../../assets/imagen.png";
 
 interface Associate {
@@ -23,15 +25,14 @@ export default function ApplyCandidatePage() {
   const [alreadyCandidate, setAlreadyCandidate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
   const [associatePassword, setAssociatePassword] = useState("");
-  const [alternativeEmail, setAlternativeEmail] = useState("");
+  const [alternativeWhatsApp, setAlternativeWhatsApp] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: "success" | "error" } | null>(null);
-  const [lastEmailUsed, setLastEmailUsed] = useState<string>("");
+  const [lastWhatsAppUsed, setLastWhatsAppUsed] = useState<string>("");
 
   const [formData, setFormData] = useState({
     proposalDescription: "",
@@ -53,10 +54,24 @@ export default function ApplyCandidatePage() {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // Función para validar email
-  const isValidEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+  // Función para validar número de WhatsApp
+  const isValidWhatsApp = (phone: string): boolean => {
+    const cleaned = phone.replace(/[\s()-]/g, '');
+    // Acepta: +573001234567 o 3001234567 o 573001234567
+    const phoneRegex = /^(\+57|57)?[1-9]\d{9}$/;
+    return phoneRegex.test(cleaned);
+  };
+
+  // Función para normalizar número de WhatsApp (asegurar que tenga +57)
+  const normalizeWhatsApp = (phone: string): string => {
+    const cleaned = phone.replace(/[\s()-]/g, '');
+    if (cleaned.startsWith('+57')) {
+      return cleaned;
+    } else if (cleaned.startsWith('57')) {
+      return '+' + cleaned;
+    } else {
+      return '+57' + cleaned;
+    }
   };
 
   const handleSearchAssociate = async (e: React.FormEvent) => {
@@ -77,6 +92,22 @@ export default function ApplyCandidatePage() {
       const data = await response.json();
       const associateData = data.data;
       
+      // Validar que el asociado tenga al menos 1 año de antigüedad (fecha de corte: 2 de febrero)
+      const cutoffDate = new Date(2025, 1, 3); // 3 de febrero de 2025 (para incluir todo el 2 de febrero)
+      const joinDate = new Date(associateData.joinDate);
+
+      console.log(joinDate)
+      console.log(cutoffDate)
+      
+
+      console.log(joinDate > cutoffDate)
+
+      if (joinDate > cutoffDate) {
+        setError(`${associateData.fullName}, debes tener al menos 1 año de antigüedad en el fondo (fecha de corte: 2 de febrero) para poder postularte como candidato`);
+        setAssociate(null);
+        return;
+      }
+      
       // Verificar si ya es candidato
       const candidateCheck = await fetch(`/api/candidates?associateId=${associateData._id}`);
       const candidateData = await candidateCheck.json();
@@ -88,7 +119,7 @@ export default function ApplyCandidatePage() {
       } else {
         setAssociate(associateData);
         setStep("verify");
-        setLastEmailUsed(associateData.email);
+        setLastWhatsAppUsed(associateData.cellPhone);
         
         // Generar y enviar código de verificación
         const codeResponse = await fetch("/api/generateVerificationCode", {
@@ -139,17 +170,19 @@ export default function ApplyCandidatePage() {
     }
   };
 
-  const handleResendCode = async (email: string) => {
+  const handleResendCode = async (whatsapp: string) => {
     setResendLoading(true);
     setError("");
 
     try {
+      const normalizedWhatsApp = normalizeWhatsApp(whatsapp || associate?.cellPhone || "");
+      
       const codeResponse = await fetch("/api/generateVerificationCode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cedula: associate?.cedula,
-          email: email || associate?.email,
+          whatsapp: normalizedWhatsApp,
         }),
       });
 
@@ -159,8 +192,8 @@ export default function ApplyCandidatePage() {
       }
 
       setError("");
-      setLastEmailUsed(email);
-      showNotification(`Código enviado exitosamente al email: ${email || associate?.email}`);
+      setLastWhatsAppUsed(normalizedWhatsApp);
+      showNotification(`Código enviado exitosamente al WhatsApp: ${normalizedWhatsApp}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al enviar el código. Intenta nuevamente.");
     } finally {
@@ -266,7 +299,15 @@ export default function ApplyCandidatePage() {
         }),
       });
 
-      setSuccess(true);
+      toast.success("¡Candidatura registrada exitosamente!", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
+
       // Reset form
       setTimeout(() => {
         setCedula("");
@@ -274,10 +315,9 @@ export default function ApplyCandidatePage() {
         setFormData({ proposalDescription: "", image: null, cargo: "", localidad: "" });
         setImagePreview(null);
         setVerificationCode("");
-        setAlternativeEmail("");
-        setLastEmailUsed("");
+        setAlternativeWhatsApp("");
+        setLastWhatsAppUsed("");
         setStep("search");
-        setSuccess(false);
       }, 3000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Ocurrió un error");
@@ -288,6 +328,32 @@ export default function ApplyCandidatePage() {
 
   return (
     <div className="min-h-screen bg-voting-gradient">
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
+      {/* Loader Overlay */}
+      {submitting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white rounded-lg p-8 flex flex-col items-center gap-4 shadow-2xl">
+            <Loader className="w-12 h-12 text-blue-600 animate-spin" />
+            <div className="text-center">
+              <h3 className="font-bold text-lg text-gray-800">Registrando candidatura...</h3>
+              <p className="text-sm text-gray-600 mt-1">Por favor espera un momento</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b bg-card-50 backdrop-blur supports-backdrop-filter:bg-card/50">
         <div className="container mx-auto px-4 py-4 flex items-center gap-3">
@@ -304,16 +370,6 @@ export default function ApplyCandidatePage() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">
-          {success && (
-            <div className="bg-green-100 border border-green-400 text-green-800 p-4 rounded-lg mb-6 flex items-center gap-3">
-              <CheckCircle className="w-5 h-5" />
-              <div>
-                <h3 className="font-semibold">¡Registro Exitoso!</h3>
-                <p className="text-sm">Tu candidatura ha sido registrada. Redirigiendo...</p>
-              </div>
-            </div>
-          )}
-
           {notification && (
             <div className={`${notification.type === 'success' ? 'bg-green-100 border border-green-400 text-green-800' : 'bg-red-100 border border-red-400 text-red-800'} p-4 rounded-lg mb-6 flex items-center gap-3 animate-pulse`}>
               {notification.type === 'success' ? (
@@ -340,8 +396,11 @@ export default function ApplyCandidatePage() {
               </p>
 
               {error && (
-                <div className="bg-red-100 border border-red-400 text-red-800 p-3 rounded-lg mb-4 text-sm">
-                  {error}
+                <div className="bg-red-100 border-l-4 border-red-600 text-red-900 p-4 rounded-lg mb-6 text-sm font-semibold shadow-lg animate-pulse">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="w-6 h-6 flex-shrink-0 mt-0.5" />
+                    <p>{error}</p>
+                  </div>
                 </div>
               )}
 
@@ -378,7 +437,7 @@ export default function ApplyCandidatePage() {
 
               <h2 className="text-2xl font-bold mb-2">Verificación de Código</h2>
               <p className="text-sm text-muted-foreground mb-6">
-                Se ha enviado un código de verificación a tu email para confirmar tu postulación como candidato
+                Se ha enviado un código de verificación a tu WhatsApp para confirmar tu postulación como candidato
               </p>
 
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
@@ -411,38 +470,38 @@ export default function ApplyCandidatePage() {
                   />
                   
                   <p className="text-xs text-muted-foreground mt-2 text-center">
-                    Este código fue enviado a:
+                    Este código fue enviado al WhatsApp:
                   </p>
                   <p className="text-sm font-semibold text-primary text-center mb-4 mt-1">
-                    {lastEmailUsed}
+                    {lastWhatsAppUsed}
                   </p>
 
                   <p className="text-xs text-muted-foreground mb-3 text-center">
-                    ¿Deseas recibir el código en otro correo?
+                    ¿Deseas recibir el código en otro número de WhatsApp?
                   </p>
                    
                   <Input
-                    id="alternative-email"
-                    type="email"
-                    placeholder="ejemplo@correo.com"
-                    value={alternativeEmail}
-                    onChange={(e) => setAlternativeEmail(e.target.value)}
+                    id="alternative-whatsapp"
+                    type="tel"
+                    placeholder="+573001234567 o 3001234567"
+                    value={alternativeWhatsApp}
+                    onChange={(e) => setAlternativeWhatsApp(e.target.value.replace(/\s/g, ''))}
                     className="text-center text-lg mb-3"
                   />
 
                   <Button
                     type="button"
                     variant="outline"
-                    className="w-full mb-4 bg-blue-500 text-white hover:bg-blue-700 border-blue-600"
-                    onClick={() => handleResendCode(alternativeEmail)}
-                    disabled={!alternativeEmail || !isValidEmail(alternativeEmail) || resendLoading}
+                    className="w-full mb-4 bg-green-500 text-white hover:bg-green-700 border-green-600"
+                    onClick={() => handleResendCode(alternativeWhatsApp)}
+                    disabled={!alternativeWhatsApp || !isValidWhatsApp(alternativeWhatsApp) || resendLoading}
                   >
-                    {resendLoading ? "Enviando..." : "Enviar Código a Este Email"}
+                    {resendLoading ? "Enviando..." : "Enviar Código a Este Número de WhatsApp"}
                   </Button>
                   
-                  {alternativeEmail && !isValidEmail(alternativeEmail) && (
+                  {alternativeWhatsApp && !isValidWhatsApp(alternativeWhatsApp) && (
                     <p className="text-xs text-red-600 mt-2 text-center">
-                      Por favor ingresa un email válido
+                      Por favor ingresa un número de WhatsApp válido
                     </p>
                   )}
                 </div>
@@ -466,7 +525,7 @@ export default function ApplyCandidatePage() {
                   setAssociate(null);
                   setVerificationCode("");
                   setError("");
-                  setLastEmailUsed("");
+                  setLastWhatsAppUsed("");
                 }}
               >
                 Volver
@@ -494,10 +553,6 @@ export default function ApplyCandidatePage() {
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Cédula</p>
                       <p className="font-semibold text-base">{associate?.cedula}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Email</p>
-                      <p className="font-semibold text-base">{associate?.email}</p>
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Zona Electoral</p>

@@ -9,11 +9,11 @@ function generateVerificationCode(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { cedula, email } = await request.json();
+    const { cedula, email, whatsapp } = await request.json();
 
-    if (!cedula || !email) {
+    if (!cedula) {
       return NextResponse.json(
-        { error: "Cédula y email son requeridos" },
+        { error: "Cédula es requerida" },
         { status: 400 }
       );
     }
@@ -41,19 +41,29 @@ export async function POST(request: NextRequest) {
     const expiryTime = new Date();
     expiryTime.setMinutes(expiryTime.getMinutes() + 10); // El código expira en 10 minutos
 
-    // Determinar qué email se usará
+    // Determinar qué email y whatsapp se usarán
     const emailToUse = email || associate.email;
+    const whatsappToUse = whatsapp || associate.cellPhone;
 
-    console.log(`[generateVerificationCode] Generando código para cédula: ${cedula}, email: ${emailToUse}, código: ${verificationCode}`);
+    console.log(`[generateVerificationCode] Generando código para cédula: ${cedula}, email: ${emailToUse}, whatsapp: ${whatsappToUse}, código: ${verificationCode}`);
 
     // Actualizar el asociado con el código de verificación
+    const updateData: any = {
+      verificationCode: verificationCode,
+      verificationCodeExpiry: expiryTime,
+      $addToSet: { 
+        emailsUsedForCode: emailToUse
+      }
+    };
+
+    // Agregar el número de WhatsApp si se proporciona
+    if (whatsappToUse) {
+      updateData.$addToSet.whatsappNumbersUsedForCode = whatsappToUse;
+    }
+
     const updatedAssociate = await Associate.findByIdAndUpdate(
       associate._id,
-      {
-        verificationCode: verificationCode,
-        verificationCodeExpiry: expiryTime,
-        $addToSet: { emailsUsedForCode: emailToUse }
-      },
+      updateData,
       { new: true }
     );
 
@@ -61,7 +71,8 @@ export async function POST(request: NextRequest) {
       cedula: updatedAssociate.cedula,
       verificationCode: updatedAssociate.verificationCode,
       verificationCodeExpiry: updatedAssociate.verificationCodeExpiry,
-      emailsUsedForCode: updatedAssociate.emailsUsedForCode
+      emailsUsedForCode: updatedAssociate.emailsUsedForCode,
+      whatsappNumbersUsedForCode: updatedAssociate.whatsappNumbersUsedForCode
     });
 
     // Determinar la URL base según el entorno
@@ -98,13 +109,13 @@ export async function POST(request: NextRequest) {
     ];
 
     // Solo agregar envío de WhatsApp si el asociado tiene teléfono
-    if (associate.cellPhone) {
+    if (whatsappToUse) {
       sendPromises.push(
         fetch(`${baseUrl}/api/sendcodews`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            to: associate.cellPhone,
+            to: whatsappToUse,
             templateName: process.env.WHATSAPP_TEMPLATE_NAME || 'otp',
             languageCode: process.env.WHATSAPP_TEMPLATE_LANG || 'es_CO',
             otp: verificationCode,

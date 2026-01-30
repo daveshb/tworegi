@@ -60,6 +60,10 @@ const associatesSchema = new Schema({
     type: [String],
     default: [],
   },
+  whatsappNumbersUsedForCode: {
+    type: [String],
+    default: [],
+  },
 });
 
 // Utiliza un patrón singleton para garantizar que solo se compile una instancia del modelo
