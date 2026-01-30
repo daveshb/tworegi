@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Vote, User, CheckCircle, ArrowLeft } from "lucide-react";
+import { Vote, CheckCircle, ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import logo from "../../../assets/imagen.png"
 
 // Tipos
@@ -15,6 +17,8 @@ type Candidate = {
   proposalDescription: string;
   imageUrl: string;
   electoralZone: string;
+  position?: string;
+  locality?: string;
 };
 
 type ViewState = 'id-entry' | 'voting' | 'confirmation' | 'success' | 'already-voted';
@@ -31,8 +35,27 @@ export default function VotingPage() {
   const [error, setError] = useState('');
   const [associateData, setAssociateData] = useState<{ fullName: string; electoralZone: string; email: string; cellPhone: string } | null>(null);
   const [zoneCandidates, setZoneCandidates] = useState<Candidate[]>([]);
-  const [alternativeEmail, setAlternativeEmail] = useState('');
+  const [alternativeWhatsApp, setAlternativeWhatsApp] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
+
+  // Función para validar número de WhatsApp
+  const isValidWhatsApp = (phone: string): boolean => {
+    const cleaned = phone.replace(/[\s()-]/g, '');
+    const phoneRegex = /^(\+57|57)?[1-9]\d{9}$/;
+    return phoneRegex.test(cleaned);
+  };
+
+  // Función para normalizar número de WhatsApp
+  const normalizeWhatsApp = (phone: string): string => {
+    const cleaned = phone.replace(/[\s()-]/g, '');
+    if (cleaned.startsWith('+57')) {
+      return cleaned;
+    } else if (cleaned.startsWith('57')) {
+      return '+' + cleaned;
+    } else {
+      return '+57' + cleaned;
+    }
+  };
 
   const handleIDSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +101,7 @@ export default function VotingPage() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               cedula: associate.cedula,
-              email: associate.email,
+              whatsapp: associate.cellPhone,
             }),
           });
 
@@ -102,7 +125,7 @@ export default function VotingPage() {
 
             if (!verifyResponse.ok) {
               const data = await verifyResponse.json();
-              setError(data.error || 'Código incorrecto. Verifica el código enviado a tu email');
+              setError(data.error || 'Código incorrecto. Verifica el código enviado a tu WhatsApp');
               setPassword('');
               return;
             }
@@ -175,17 +198,19 @@ export default function VotingPage() {
     router.push('/dashboard');
   };
 
-  const handleResendCode = async (email: string) => {
+  const handleResendCode = async (whatsapp: string) => {
     setResendLoading(true);
     setError('');
 
     try {
+      const normalizedWhatsApp = normalizeWhatsApp(whatsapp || associateData?.cellPhone || "");
+      
       const codeResponse = await fetch("/api/generateVerificationCode", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           cedula: voterID,
-          email: email || associateData?.email,
+          whatsapp: normalizedWhatsApp,
         }),
       });
 
@@ -195,7 +220,14 @@ export default function VotingPage() {
       }
 
       setError('');
-      alert('Código enviado exitosamente al email: ' + (email || associateData?.email));
+      toast.success(`Código enviado exitosamente al WhatsApp: ${normalizedWhatsApp}`, {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al enviar el código. Intenta nuevamente.');
     } finally {
@@ -213,7 +245,7 @@ export default function VotingPage() {
     setError('');
     setAssociateData(null);
     setZoneCandidates([]);
-    setAlternativeEmail('');
+    setAlternativeWhatsApp('');
   };
 
   return (
@@ -249,11 +281,12 @@ export default function VotingPage() {
             onSubmit={handleIDSubmit}
             loading={loading}
             error={error}
-            associateEmail={associateData?.email}
-            alternativeEmail={alternativeEmail}
-            setAlternativeEmail={setAlternativeEmail}
+            associateEmail={associateData?.cellPhone}
+            alternativeWhatsApp={alternativeWhatsApp}
+            setAlternativeWhatsApp={setAlternativeWhatsApp}
             onResendCode={handleResendCode}
             resendLoading={resendLoading}
+            isValidWhatsApp={isValidWhatsApp}
           />
         )}
 
@@ -296,12 +329,23 @@ export default function VotingPage() {
           />
         )}
       </div>
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
     </div>
   );
 }
 
 // Componente Vista 1: Ingreso de Cédula
-const IDEntryView = ({ voterID, setVoterID, password, setPassword, showPassword, onSubmit, loading, error, associateEmail, alternativeEmail, setAlternativeEmail, onResendCode, resendLoading }: {
+const IDEntryView = ({ voterID, setVoterID, password, setPassword, showPassword, onSubmit, loading, error, associateEmail, alternativeWhatsApp, setAlternativeWhatsApp, onResendCode, resendLoading, isValidWhatsApp }: {
   voterID: string;
   setVoterID: (id: string) => void;
   password: string;
@@ -311,10 +355,11 @@ const IDEntryView = ({ voterID, setVoterID, password, setPassword, showPassword,
   loading: boolean;
   error: string;
   associateEmail?: string;
-  alternativeEmail: string;
-  setAlternativeEmail: (email: string) => void;
-  onResendCode: (email: string) => Promise<void>;
+  alternativeWhatsApp: string;
+  setAlternativeWhatsApp: (phone: string) => void;
+  onResendCode: (phone: string) => Promise<void>;
   resendLoading: boolean;
+  isValidWhatsApp: (phone: string) => boolean;
 }) => (
   <div className="max-w-md mx-auto">
     <div className="bg-card rounded-xl border p-8 text-center">
@@ -370,35 +415,40 @@ const IDEntryView = ({ voterID, setVoterID, password, setPassword, showPassword,
             />
           
             <p className="text-xs text-muted-foreground mt-2 text-center">
-              Este código fue enviado a:
+              Este código fue enviado al WhatsApp:
             </p>
             <p className="text-sm font-semibold text-primary text-center mb-4">
               {associateEmail}
             </p>
 
             <p className="text-xs text-muted-foreground mb-3 text-center">
-              ¿Deseas recibir el código en otro correo?
+              ¿Deseas recibir el código en otro número de WhatsApp?
             </p>
              
             <Input
-              id="alternative-email"
-              type="email"
-              placeholder="ejemplo@correo.com"
-              value={alternativeEmail}
-              onChange={(e) => setAlternativeEmail(e.target.value)}
+              id="alternative-whatsapp"
+              type="tel"
+              placeholder="+573001234567 o 3001234567"
+              value={alternativeWhatsApp}
+              onChange={(e) => setAlternativeWhatsApp(e.target.value.replace(/\s/g, ''))}
               className="text-center text-lg mb-3"
             />
 
-{/* boton azul */}
             <Button
               type="button"
               variant="outline"
-              className="w-full mb-4 "
-              onClick={() => onResendCode(alternativeEmail)}
-              disabled={!alternativeEmail || resendLoading}
+              className="w-full mb-4 bg-green-500 text-white hover:bg-green-700 border-green-600"
+              onClick={() => onResendCode(alternativeWhatsApp)}
+              disabled={!alternativeWhatsApp || !isValidWhatsApp(alternativeWhatsApp) || resendLoading}
             >
-              {resendLoading ? 'Enviando...' : 'Enviar Código a Este Email'}
+              {resendLoading ? 'Enviando...' : 'Enviar Código a Este Número de WhatsApp'}
             </Button>
+
+            {alternativeWhatsApp && !isValidWhatsApp(alternativeWhatsApp) && (
+              <p className="text-xs text-red-600 mt-2 text-center">
+                Por favor ingresa un número de WhatsApp válido
+              </p>
+            )}
           </div>
         )}
 
@@ -493,8 +543,31 @@ const CandidateCard = ({ candidate, isSelected, onSelect }: {
         className="w-24 h-24 rounded-full mx-auto mb-4 object-cover"
       />
       <h3 className="text-lg font-bold mb-1">{candidate.fullName}</h3>
-      <p className="text-sm text-primary font-medium mb-2">{candidate.electoralZone}</p>
-      <p className="text-xs text-muted-foreground mb-4">{candidate.proposalDescription || 'Sin propuesta registrada'}</p>
+      
+      {candidate.position && (
+        <p className="text-sm font-semibold text-primary mb-1">{candidate.position}</p>
+      )}
+      
+      {candidate.locality && (
+        <p className="text-xs text-muted-foreground mb-2">📍 {candidate.locality}</p>
+      )}
+      
+      <p className="text-xs text-muted-foreground mb-1">Zona: {candidate.electoralZone}</p>
+      
+      <p className="text-xs text-muted-foreground mb-4 line-clamp-4 max-h-20 overflow-hidden">
+        {candidate.proposalDescription ? (
+          <>
+            {candidate.proposalDescription.length > 300 
+              ? candidate.proposalDescription.substring(0, 300) + '...' 
+              : candidate.proposalDescription}
+            {candidate.proposalDescription.length > 300 && (
+              <span className="text-gray-500"> ({candidate.proposalDescription.length}/300 caracteres)</span>
+            )}
+          </>
+        ) : (
+          'Sin propuesta registrada'
+        )}
+      </p>
       
       <Button
         variant={isSelected ? "default" : "outline"}
