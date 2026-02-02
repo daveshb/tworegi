@@ -368,7 +368,7 @@ const IDEntryView = ({ voterID, setVoterID, password, setPassword, showPassword,
         <Image src={logo} alt="Logo" width={120} height={120}/>
       </div>
       
-      <h2 className="text-xl font-bold mb-3">Votación delegados asamablea general</h2>
+      <h2 className="text-xl font-bold mb-3">Votación delegados asamblea general</h2>
       <h2 className="text-xl font-bold mb-3">Foncor 2026</h2>
       <h2 className="text-2xl font-bold mb-6">Identificación del Votante</h2>
       <p className="text-sm text-muted-foreground mb-8">

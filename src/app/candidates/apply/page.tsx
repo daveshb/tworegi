@@ -362,7 +362,7 @@ export default function ApplyCandidatePage() {
           
 
           <div>
-            <h1 className="text-2xl font-bold">Candidato a Delegado</h1>
+            <h1 className="text-2xl font-bold">Postulación a Delegado</h1>
             <p className="text-sm text-muted-foreground">Asamblea General Foncor 2026</p>
           </div>
         </div>
@@ -443,7 +443,7 @@ export default function ApplyCandidatePage() {
               <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mb-6">
                 <p className="text-xs font-semibold text-primary mb-2 uppercase">Proceso de Postulación</p>
                 <p className="text-sm text-muted-foreground">
-                  Estás a punto de registrarte como <span className="font-semibold text-primary">Candidato a Delegado de Asamblea General 2026</span> de Foncor
+                  Estás a punto de registrarte como <span className="font-semibold text-primary">Postulación a Delegado de Asamblea General 2026</span> de Foncor
                 </p>
               </div>
 
@@ -667,20 +667,22 @@ export default function ApplyCandidatePage() {
 
                   <div>
                     <label htmlFor="proposal" className="block text-sm font-medium mb-3">
-                      Descripción del Perfil *
+                      Descripción del Perfil * <span className="text-xs text-muted-foreground">({formData.proposalDescription.length}/80)</span>
                     </label>
                     <textarea
                       id="proposal"
                       value={formData.proposalDescription}
                       onChange={(e) => {
-                        setFormData({ ...formData, proposalDescription: e.target.value });
-                        if (e.target.value.trim()) {
+                        const value = e.target.value.slice(0, 80);
+                        setFormData({ ...formData, proposalDescription: value });
+                        if (value.trim()) {
                           setFieldErrors({ ...fieldErrors, proposalDescription: undefined });
                         }
                       }}
                       placeholder="Describe aquí tu perfil como candidato(a) y tus principales intereses para representar a los asociados en la Asamblea General Foncor 2026."
                       className={`w-full px-4 py-3 border rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 ${fieldErrors.proposalDescription ? 'border-red-500' : ''}`}
                       rows={4}
+                      maxLength={80}
                       required
                     />
                     {fieldErrors.proposalDescription && (
