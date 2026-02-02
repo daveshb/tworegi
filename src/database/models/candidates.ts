@@ -20,7 +20,7 @@ const candidatesSchema = new Schema({
   electoralZone: {
     type: String,
     required: [true, "Electoral zone is required"],
-    enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"],
+    enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6", "FONCOR"],
   },
   email: {
     type: String,
