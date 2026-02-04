@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroui/react": "^2.8.5",
+    "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-slot": "^1.2.3",
     "axios": "^1.13.1",
     "chart.js": "^4.5.1",
@@ -27,11 +28,13 @@
     "react": "19.2.3",
     "react-chartjs-2": "^5.3.1",
     "react-dom": "19.2.3",
+    "react-hook-form": "^7.71.1",
     "react-hot-toast": "^2.6.0",
     "react-toastify": "^11.0.5",
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
-    "twilio": "^5.11.2"
+    "twilio": "^5.11.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.16",

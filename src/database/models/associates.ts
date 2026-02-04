@@ -20,7 +20,7 @@ const associatesSchema = new Schema({
   electoralZone: {
     type: String,
     required: [true, "Electoral zone is required"],
-    enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"],
+    enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6", "FONCOR", "COLCERAMICA", "EX-CORONAS", "ALMACENES CORONA", "LOGISTICA Y TRANSPORTE", "OTROS"],
   },
   email: {
     type: String,
@@ -42,7 +42,6 @@ const associatesSchema = new Schema({
   },
   password: {
     type: String,
-    required: [true, "Password is required"],
     trim: true,
     minlength: [4, "Password must be at least 4 digits"],
     maxlength: [4, "Password must be exactly 4 digits"],

@@ -393,7 +393,6 @@ const IDEntryView = ({ voterID, setVoterID, password, setPassword, showPassword,
             value={voterID}
             onChange={(e) => setVoterID(e.target.value.replace(/\D/g, ''))}
             className="text-center text-lg"
-            maxLength={10}
             required
           />
         </div>
