@@ -3,10 +3,10 @@ import { Schema, model, Model } from "mongoose";
 interface Vote {
   voterId: string;
   voterName: string;
-  voterZone: "Zone 1" | "Zone 2" | "Zone 3" | "Zone 4" | "Zone 5" | "Zone 6";
+  voterZone: "Zone 1" | "Zone 2" | "Zone 3" | "Zone 4" | "Zone 5" | "Zone 6" | "FONCOR" | "COLCERAMICA" | "EX-CORONAS" | "ALMACENES CORONA" | "LOGISTICA Y TRANSPORTE" | "OTROS";
   candidateId: Schema.Types.ObjectId;
   candidateName: string;
-  candidateZone: "Zone 1" | "Zone 2" | "Zone 3" | "Zone 4" | "Zone 5" | "Zone 6";
+  candidateZone: "Zone 1" | "Zone 2" | "Zone 3" | "Zone 4" | "Zone 5" | "Zone 6" | "FONCOR" | "COLCERAMICA" | "EX-CORONAS" | "ALMACENES CORONA" | "LOGISTICA Y TRANSPORTE" | "OTROS";
   votedAt: Date;
   createdAt?: Date;
   updatedAt?: Date;
@@ -27,7 +27,7 @@ const votesSchema = new Schema(
     voterZone: {
       type: String,
       required: [true, "Voter zone is required"],
-      enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"],
+      enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6", "FONCOR", "COLCERAMICA", "EX-CORONAS", "ALMACENES CORONA", "LOGISTICA Y TRANSPORTE", "OTROS"],
     },
     candidateId: {
       type: Schema.Types.ObjectId,
@@ -40,7 +40,7 @@ const votesSchema = new Schema(
     candidateZone: {
       type: String,
       required: [true, "Candidate zone is required"],
-      enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6"],
+      enum: ["Zone 1", "Zone 2", "Zone 3", "Zone 4", "Zone 5", "Zone 6", "FONCOR", "COLCERAMICA", "EX-CORONAS", "ALMACENES CORONA", "LOGISTICA Y TRANSPORTE", "OTROS"],
     },
     votedAt: {
       type: Date,
