@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     const userMail = process.env.MAIL_USER;
     const passMail = process.env.MAIL_PASS;
-    const adminEmail = "aalejandroacevedo@gmail.com";
+    const adminEmail = "tramitesfoncor@gmail.com";
 
     if (!fullName || !cedula || !email) {
       return NextResponse.json(
