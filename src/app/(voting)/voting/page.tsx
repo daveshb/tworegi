@@ -183,10 +183,10 @@ export default function VotingPage() {
 
       setCurrentView('success');
       
-      // Después de 5 segundos, volver a la vista inicial
+      // Después de 8 segundos, volver a la vista inicial
       setTimeout(() => {
         handleReset();
-      }, 5000);
+      }, 8000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrar voto');
     } finally {
@@ -658,7 +658,7 @@ const SuccessView = ({ voterID }: { voterID: string }) => (
           ✅ Voto registrado exitosamente.
         </p>
         <p className="text-xs text-muted-foreground mt-2">
-          Redirigiendo automáticamente en 5 segundos...
+          Redirigiendo automáticamente en 8 segundos...
         </p>
       </div>
 
