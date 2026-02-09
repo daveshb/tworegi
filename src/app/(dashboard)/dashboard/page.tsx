@@ -3,12 +3,30 @@
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Vote, Users, BarChart3, Clock, LogOut, Plus, Settings } from "lucide-react";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
   const router = useRouter();
 
-  const handleLogout = () => {
-    router.push("/");
+  useEffect(() => {
+    // Verificar token en localStorage y redirigir si no existe
+    try {
+      const token = localStorage.getItem('tworegi_token');
+      if (!token) router.push('/login');
+    } catch (err) {
+      router.push('/login');
+    }
+  }, [router]);
+
+  const handleLogout = async () => {
+    // Borrar token en cliente e intentar limpiar cookie en servidor
+    localStorage.removeItem('tworegi_token');
+    try {
+      await fetch('/api/logout', { method: 'POST' });
+    } catch (e) {
+      // ignore
+    }
+    router.push('/login');
   };
 
   return (

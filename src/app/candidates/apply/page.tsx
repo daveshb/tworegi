@@ -708,7 +708,12 @@ export default function ApplyCandidatePage() {
                       className="flex-1 bg-button-gradient text-white text-lg py-3"
                       disabled={submitting || !formData.image}
                     >
-                      {submitting ? "Registrando..." : "Registrarse como Candidato"}
+                      {submitting ? "Registrando..." : (
+                        <>
+                          <span className="block sm:hidden">Registrar</span>
+                          <span className="hidden sm:inline">Registrarse como Candidato</span>
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>
