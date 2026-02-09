@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
           nombreCompleto: associate.fullName,
           password: verificationCode,
           phoneNumber: associate.cellPhone,
-          tipoPostulacion: "verificación",
+          tipoPostulacion: "candidato",
           descripcion: "Código de verificación para tu participación en la Asamblea General Foncor 2026",
         }),
       }).then(async (res) => {

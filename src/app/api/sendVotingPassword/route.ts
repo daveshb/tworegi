@@ -156,7 +156,7 @@ async function sendEmailPassword(
           <div class="container">
             <div class="header">
               <h1>🗳️ Código de verificación</h1>
-              <h1>${tipoPostulacion === 'candidato' ? 'Postulación delegados asamblea general 2026' : 'Votación delegados asamblea 2026'}</h1>
+              <h1>${tipoPostulacion === 'candidato' ? 'para postulación a delegado de asamblea 2026' : 'Votación delegados asamblea 2026'}</h1>
               <h1>Foncor</h1>
             </div>
             <div class="content">
