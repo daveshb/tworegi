@@ -21,7 +21,14 @@ type VoteSummary = {
   votesByCandidate: VoteData[];
 }
 
-const ZONES = ['Zone 1', 'Zone 2', 'Zone 3', 'Zone 4', 'Zone 5', 'Zone 6'];
+const ZONES = [
+  'FONCOR', 
+  'COLCERAMICA', 
+  'EX-CORONAS', 
+  'ALMACENES CORONA', 
+  'LOGISTICA Y TRANSPORTE', 
+  'OTROS'
+];
 
 export default function VotingPage() {
   const router = useRouter();
@@ -29,10 +36,30 @@ export default function VotingPage() {
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [totalPostulados, setTotalPostulados] = useState(0);
+  const [loadingPostulados, setLoadingPostulados] = useState(true);
 
   useEffect(() => {
     fetchVotingData();
+    fetchPostulados();
   }, []);
+
+  const fetchPostulados = async () => {
+    try {
+      setLoadingPostulados(true);
+      const response = await fetch('/api/candidates');
+      if (response.ok) {
+        const data = await response.json();
+        const count = data.data?.length || 0;
+        setTotalPostulados(count);
+        console.log('[Voting] Total de postulados:', count);
+      }
+    } catch (error) {
+      console.error('[Voting] Error al cargar postulados:', error);
+    } finally {
+      setLoadingPostulados(false);
+    }
+  };
 
   const fetchVotingData = async () => {
     try {
@@ -70,14 +97,18 @@ export default function VotingPage() {
             <Button
               variant="outline"
               onClick={() => router.push('/reports')}
+              className="cursor-pointer"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver a Reportes
             </Button>
             <Button
-              onClick={fetchVotingData}
+              onClick={() => {
+                fetchVotingData();
+                fetchPostulados();
+              }}
               disabled={loading}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refrescar
@@ -108,9 +139,9 @@ export default function VotingPage() {
           <div className="bg-white rounded-xl p-6 shadow-md border border-purple-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-purple-600 text-sm font-semibold">Candidatos</p>
+                <p className="text-purple-600 text-sm font-semibold">Candidatos Postulados</p>
                 <p className="text-4xl font-bold mt-2 text-slate-900">
-                  {loading ? '-' : voteSummary?.totalCandidates || 0}
+                  {loadingPostulados ? '-' : totalPostulados}
                 </p>
               </div>
               <Users className="w-12 h-12 text-purple-400" />
@@ -120,11 +151,9 @@ export default function VotingPage() {
           <div className="bg-white rounded-xl p-6 shadow-md border border-green-200">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-green-600 text-sm font-semibold">Participación</p>
+                <p className="text-green-600 text-sm font-semibold">Votos Emitidos</p>
                 <p className="text-4xl font-bold mt-2 text-slate-900">
-                  {loading ? '-' : voteSummary && voteSummary.totalVotes > 0 
-                    ? `${((voteSummary.totalVotes / (voteSummary.totalCandidates * 10)) * 100).toFixed(1)}%`
-                    : '0%'}
+                  {loading ? '-' : voteSummary?.totalVotes || 0}
                 </p>
               </div>
               <TrendingUp className="w-12 h-12 text-green-400" />
@@ -138,23 +167,31 @@ export default function VotingPage() {
           <div className="flex flex-wrap gap-2">
             <Button
               onClick={() => setSelectedZone('all')}
-              className={selectedZone === 'all' 
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'}
-            >
-              Todas las Zonas
-            </Button>
-            {ZONES.map(zone => (
-              <Button
-                key={zone}
-                onClick={() => setSelectedZone(zone)}
-                className={selectedZone === zone 
+              className={`cursor-pointer ${
+                selectedZone === 'all' 
                   ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                  : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'}
-              >
-                {zone}
-              </Button>
-            ))}
+                  : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+              }`}
+            >
+              Todas las Zonas {voteSummary && `(${voteSummary.totalVotes})`}
+            </Button>
+            {ZONES.map(zone => {
+              const zoneCount = voteSummary?.votesByZone[zone] || 0;
+              return (
+                <Button
+                  key={zone}
+                  onClick={() => setSelectedZone(zone)}
+                  className={`cursor-pointer ${
+                    selectedZone === zone 
+                      ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                      : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
+                  }`}
+                  disabled={zoneCount === 0}
+                >
+                  {zone} {zoneCount > 0 && `(${zoneCount})`}
+                </Button>
+              );
+            })}
           </div>
         </div>
 
@@ -181,9 +218,12 @@ export default function VotingPage() {
             </h2>
 
             {filteredCandidates.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-slate-600">
-                  No hay votos registrados {selectedZone !== 'all' && `en ${selectedZone}`}
+              <div className="text-center py-12">
+                <Vote className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                <p className="text-slate-600 text-lg font-medium">
+                  {selectedZone !== 'all' 
+                    ? `No hay resultados de votación en ${selectedZone}`
+                    : 'No hay datos de votación registrados aún'}
                 </p>
               </div>
             ) : (
@@ -208,9 +248,9 @@ export default function VotingPage() {
 
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <div className="flex-1 bg-slate-100 rounded-full h-8 overflow-hidden border border-slate-300">
+                        <div className="flex-1 bg-slate-200 rounded-full h-8 overflow-hidden border border-slate-400">
                           <div
-                            className="bg-linear-to-r from-blue-500 to-blue-600 h-full transition-all duration-300 flex items-center justify-end pr-3"
+                            className="bg-linear-to-r from-blue-600 to-blue-700 h-full transition-all duration-300 flex items-center justify-end pr-3"
                             style={{
                               width: `${(candidate.votes / maxVotes) * 100}%`,
                               minWidth: candidate.votes > 0 ? '30px' : '0px'

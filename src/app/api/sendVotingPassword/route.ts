@@ -173,7 +173,7 @@ async function sendEmailPassword(
               <div class="instructions">
                 <strong>Instrucciones:</strong>
                 <ol>
-                  <li>Ingresa tu código de verificaión en el campo solicitado</li>
+                  <li>Ingresa tu código de verificación en el campo solicitado</li>
                   <li>Haz clic en verificar y continuar</li>
                   <li>Procede a ${tipoPostulacion === 'candidato' ? 'completar tu postulación' : 'emitir tu voto'}</li>
                 </ol>

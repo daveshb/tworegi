@@ -13,6 +13,8 @@ export async function GET(request: NextRequest) {
   try {
     await dbConnection();
 
+    console.log("back")
+
     const { searchParams } = new URL(request.url);
     const associateId = searchParams.get("associateId");
     const electoralZone = searchParams.get("electoralZone");
