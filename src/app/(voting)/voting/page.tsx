@@ -252,7 +252,11 @@ export default function VotingPage() {
     <div className="min-h-screen bg-voting-gradient">
       {/* Header */}
       <header className="border-b bg-card-50 backdrop-blur supports-backdrop-filter:bg-card/50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
+          <Button variant="outline" size="sm" onClick={handleBackToDashboard}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver al Dashboard
+          </Button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-logo-gradient rounded-lg flex items-center justify-center">
               <Vote className="w-5 h-5 text-white" />
@@ -262,10 +266,6 @@ export default function VotingPage() {
               <p className="text-sm text-muted-foreground">Sistema de Votación</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleBackToDashboard}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver al Dashboard
-          </Button>
         </div>
       </header>
 

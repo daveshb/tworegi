@@ -64,7 +64,7 @@ export default function AssociatesPage() {
             variant="outline"
             size="sm"
             onClick={() => router.back()}
-            className="w-10 h-10 p-0"
+            className="w-10 h-10 p-0 cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
           </Button>
@@ -83,7 +83,7 @@ export default function AssociatesPage() {
             Associates ({associates.length})
           </h2>
           <Button
-            className="bg-button-gradient text-white"
+            className="bg-button-gradient text-white cursor-pointer"
             onClick={() => setIsModalOpen(true)}
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -114,7 +114,7 @@ export default function AssociatesPage() {
               No associates registered yet
             </p>
             <Button
-              className="bg-button-gradient text-white"
+              className="bg-button-gradient text-white cursor-pointer"
               onClick={() => setIsModalOpen(true)}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -194,6 +194,7 @@ export default function AssociatesPage() {
                             setSelectedAssociate(associate);
                             setIsEditModalOpen(true);
                           }}
+                          className="cursor-pointer"
                         >
                           <Edit className="w-4 h-4" />
                         </Button>
