@@ -9,7 +9,7 @@ function generateVerificationCode(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { cedula, email, whatsapp } = await request.json();
+    const { cedula, email, whatsapp, tipoPostulacion } = await request.json();
 
     if (!cedula) {
       return NextResponse.json(
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
           nombreCompleto: associate.fullName,
           password: verificationCode,
           phoneNumber: associate.cellPhone,
-          tipoPostulacion: "candidato",
+          tipoPostulacion: tipoPostulacion || "candidato",
           descripcion: "Código de verificación para tu participación en la Asamblea General Foncor 2026",
         }),
       }).then(async (res) => {

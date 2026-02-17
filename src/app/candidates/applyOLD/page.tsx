@@ -128,6 +128,7 @@ export default function ApplyCandidatePage() {
           body: JSON.stringify({
             cedula: associateData.cedula,
             email: associateData.email,
+            tipoPostulacion: "candidato",
           }),
         });
 
@@ -183,6 +184,7 @@ export default function ApplyCandidatePage() {
         body: JSON.stringify({
           cedula: associate?.cedula,
           whatsapp: normalizedWhatsApp,
+          tipoPostulacion: "candidato",
         }),
       });
 

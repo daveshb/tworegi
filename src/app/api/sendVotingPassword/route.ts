@@ -156,7 +156,7 @@ async function sendEmailPassword(
           <div class="container">
             <div class="header">
               <h1>🗳️ Código de verificación</h1>
-              <h1>${tipoPostulacion === 'candidato' ? 'para postulación a delegado de asamblea 2026' : 'Votación delegados asamblea 2026'}</h1>
+              <h1>${tipoPostulacion === 'candidato' ? 'para postulación a delegado de asamblea 2026' : 'para votación delegados asamblea 2026'}</h1>
               <h1>Foncor</h1>
             </div>
             <div class="content">
@@ -175,7 +175,7 @@ async function sendEmailPassword(
                 <ol>
                   <li>Ingresa tu código de verificación en el campo solicitado</li>
                   <li>Haz clic en verificar y continuar</li>
-                  <li>Procede a ${tipoPostulacion === 'candidato' ? 'completar tu postulación' : 'emitir tu voto'}</li>
+                  <li>Procede a ${tipoPostulacion === 'candidato' ? 'completar tu postulación' : 'completar tu votación'}</li>
                 </ol>
               </div>
               <div class="security-note">
