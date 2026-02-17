@@ -480,7 +480,7 @@ const VotingView = ({ candidates, selectedCandidate, onCandidateSelect, onVoteCo
 }) => (
   <div className="max-w-4xl mx-auto">
     <div className="text-center mb-8">
-      <h2 className="text-3xl font-bold mb-2">Elección Presidencial 2025</h2>
+      <h2 className="text-3xl font-bold mb-2">Votación delegados asamblea general</h2>
       <p className="text-muted-foreground mb-2">
         Zona Electoral: <span className="font-semibold">{voterZone}</span>
       </p>
