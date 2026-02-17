@@ -102,6 +102,7 @@ export default function VotingPage() {
             body: JSON.stringify({
               cedula: associate.cedula,
               whatsapp: associate.cellPhone,
+              tipoPostulacion: "votacion",
             }),
           });
 
@@ -211,6 +212,7 @@ export default function VotingPage() {
         body: JSON.stringify({
           cedula: voterID,
           whatsapp: normalizedWhatsApp,
+          tipoPostulacion: "votacion",
         }),
       });
 
