@@ -478,7 +478,7 @@ export default function ApplyCandidatePage() {
                     {lastWhatsAppUsed}
                   </p>
 
-                  <p className="text-xs text-muted-foreground mb-3 text-center">
+                  {/* <p className="text-xs text-muted-foreground mb-3 text-center">
                     ¿Deseas recibir el código en otro número de WhatsApp?
                   </p>
                    
@@ -489,9 +489,9 @@ export default function ApplyCandidatePage() {
                     value={alternativeWhatsApp}
                     onChange={(e) => setAlternativeWhatsApp(e.target.value.replace(/\s/g, ''))}
                     className="text-center text-lg mb-3"
-                  />
+                  /> */}
 
-                  <Button
+                  {/* <Button
                     type="button"
                     variant="outline"
                     className="w-full mb-4 bg-green-500 text-white hover:bg-green-700 border-green-600"
@@ -499,7 +499,7 @@ export default function ApplyCandidatePage() {
                     disabled={!alternativeWhatsApp || !isValidWhatsApp(alternativeWhatsApp) || resendLoading}
                   >
                     {resendLoading ? "Enviando..." : "Enviar Código a Este Número de WhatsApp"}
-                  </Button>
+                  </Button> */}
                   
                   {alternativeWhatsApp && !isValidWhatsApp(alternativeWhatsApp) && (
                     <p className="text-xs text-red-600 mt-2 text-center">
