@@ -91,7 +91,7 @@ export default function NuevaPostulacionPage() {
     }
   }, [tipoPostulacion]);
 
-  const defaultValues: PostulacionFormType = {
+  const defaultValues = {
     lider: {
       cedula: "",
       nombreCompleto: "",
@@ -114,8 +114,9 @@ export default function NuevaPostulacionPage() {
     estado: "DRAFT",
   };
 
-  const methods = useForm<PostulacionFormType>({
-    resolver: schema ? zodResolver(schema) : undefined,
+  const methods = useForm({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: schema ? zodResolver(schema as any) : undefined,
     mode: "onChange",
     defaultValues,
   });
@@ -218,7 +219,8 @@ export default function NuevaPostulacionPage() {
     tipoPostulacion,
   ]);
 
-  const onSubmit = async (data: PostulacionFormType) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
       setError(null);

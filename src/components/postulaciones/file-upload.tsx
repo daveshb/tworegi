@@ -153,7 +153,7 @@ export function FileUpload<T extends Record<string, unknown>>({
               <div className="flex items-center gap-2">
                 <Upload className="w-4 h-4 text-green-600" />
                 <span className="text-sm text-gray-700">
-                  {(currentValue as FileMetadata).original_filename}
+                  {(currentValue as unknown as FileMetadata).original_filename}
                 </span>
               </div>
               <button
