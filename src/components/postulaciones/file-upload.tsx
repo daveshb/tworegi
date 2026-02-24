@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Controller, FieldPath, UseFormSetValue, useFormContext } from "react-hook-form";
+import { Controller, FieldPath, PathValue, useFormContext } from "react-hook-form";
 import { AlertCircle, Upload, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface FileUploadProps<T extends Record<string, any>> {
+interface FileUploadProps<T extends Record<string, unknown>> {
   name: FieldPath<T>;
   label: string;
   accept: string;
@@ -25,7 +25,7 @@ interface FileMetadata {
   createdAt: Date;
 }
 
-export function FileUpload<T extends Record<string, any>>({
+export function FileUpload<T extends Record<string, unknown>>({
   name,
   label,
   accept,
@@ -58,9 +58,14 @@ export function FileUpload<T extends Record<string, any>>({
         }
 
         // Obtener firma de Cloudinary
-        const signatureResponse = await fetch("/api/uploads/signature");
+        const signatureResponse = await fetch(`/api/uploads/signature?resourceType=${resourceType}`);
         if (!signatureResponse.ok) {
-          throw new Error("No se pudo obtener firma de Cloudinary");
+          const errorData = await signatureResponse
+            .json()
+            .catch(() => ({ error: null }));
+          throw new Error(
+            errorData?.error || "No se pudo obtener firma de Cloudinary"
+          );
         }
         const { timestamp, signature, apiKey, cloudName, folder } =
           await signatureResponse.json();
@@ -75,14 +80,20 @@ export function FileUpload<T extends Record<string, any>>({
         formData.append("resource_type", resourceType);
 
         // Subir a Cloudinary
-        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+        const uploadPath = resourceType === "raw" ? "raw" : "image";
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${uploadPath}/upload`;
         const uploadResponse = await fetch(uploadUrl, {
           method: "POST",
           body: formData,
         });
 
         if (!uploadResponse.ok) {
-          throw new Error("Error al subir archivo a Cloudinary");
+          const errorData = await uploadResponse
+            .json()
+            .catch(() => ({ error: { message: null } }));
+          throw new Error(
+            errorData?.error?.message || "Error al subir archivo a Cloudinary"
+          );
         }
 
         const uploadResult = await uploadResponse.json();
@@ -99,8 +110,7 @@ export function FileUpload<T extends Record<string, any>>({
         };
 
         // Actualizar formulario
-        control._formValues[name as any] = metadata;
-        setValue(name, metadata as any);
+        setValue(name, metadata as PathValue<T, FieldPath<T>>);
         
         // Resetear input
         if (fileInputRef.current) {
@@ -114,11 +124,11 @@ export function FileUpload<T extends Record<string, any>>({
         setIsUploading(false);
       }
     },
-    [control, name, maxSizeMB, resourceType, setValue]
+    [name, maxSizeMB, resourceType, setValue]
   );
 
   const handleRemove = useCallback(() => {
-    setValue(name, null as any);
+    setValue(name, null as PathValue<T, FieldPath<T>>);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -131,7 +141,7 @@ export function FileUpload<T extends Record<string, any>>({
       control={control}
       name={name}
       rules={{ required: required ? `${label} es requerido` : false }}
-      render={({ field }) => (
+      render={() => (
         <div className="space-y-2">
           <label htmlFor={name} className="block text-sm font-medium text-gray-700">
             {label}
@@ -143,7 +153,7 @@ export function FileUpload<T extends Record<string, any>>({
               <div className="flex items-center gap-2">
                 <Upload className="w-4 h-4 text-green-600" />
                 <span className="text-sm text-gray-700">
-                  {(currentValue as FileMetadata).original_filename}
+                  {(currentValue as unknown as FileMetadata).original_filename}
                 </span>
               </div>
               <button

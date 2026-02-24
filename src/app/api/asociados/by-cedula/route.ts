@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnection from "@/lib/database";
+import Associate from "@/database/models/associates";
 
 export async function GET(request: NextRequest) {
   try {
@@ -22,71 +23,36 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // TODO: Implementar búsqueda en colección "asociados"
-    // Por ahora, retorna mock para demostración
-    // En producción, conectarse a la colección de asociados
+    // Buscar en la base de datos
+    const asociado = await Associate.findOne({ cedula: cedula.trim() });
 
-    // Mock data - replace with real database query
-    const mockAsociados: Record<string, any> = {
-      "1234567890": {
-        cedula: "1234567890",
-        nombreCompleto: "Juan Carlos Pérez García",
-        cargoEmpresa: "Gerente General",
-        sedeTrabajo: "Bogotá",
-        celular: "3001234567",
-        correo: "juan.perez@empresa.com",
-        asociadoStatus: "HABIL",
-        motivoInhabilidad: null,
-      },
-      "9876543210": {
-        cedula: "9876543210",
-        nombreCompleto: "María Alexandra López Martínez",
-        cargoEmpresa: "Directora Financiera",
-        sedeTrabajo: "Medellín",
-        celular: "3109876543",
-        correo: "maria.lopez@empresa.com",
-        asociadoStatus: "HABIL",
-        motivoInhabilidad: null,
-      },
-      "5555555555": {
-        cedula: "5555555555",
-        nombreCompleto: "No Registrado",
+    if (!asociado) {
+      // No existe en la BD
+      return NextResponse.json({
+        cedula,
+        nombreCompleto: "",
         cargoEmpresa: "",
         sedeTrabajo: "",
         celular: "",
         correo: "",
         asociadoStatus: "NO_REGISTRADO",
         motivoInhabilidad: null,
-      },
-      "1111111110": {
-        cedula: "1111111110",
-        nombreCompleto: "Inhábil Usuario",
-        cargoEmpresa: "",
-        sedeTrabajo: "",
-        celular: "",
-        correo: "",
-        asociadoStatus: "INHABIL",
-        motivoInhabilidad: "Tiene antecedentes disciplinarios",
-      },
-    };
-
-    const asociado = mockAsociados[cedula];
-
-    if (!asociado) {
-      // Default to HABIL for other cedulas in demo mode
-      return NextResponse.json({
-        cedula,
-        nombreCompleto: `Asociado ${cedula}`,
-        cargoEmpresa: "Empleado",
-        sedeTrabajo: "Bogotá",
-        celular: "3001234567",
-        correo: `asociado${cedula.slice(-4)}@empresa.com`,
-        asociadoStatus: "HABIL",
-        motivoInhabilidad: null,
       });
     }
 
-    return NextResponse.json(asociado);
+    // Existe en la BD
+    const status = asociado.isActive ? "HABIL" : "INHABIL";
+
+    return NextResponse.json({
+      cedula: asociado.cedula,
+      nombreCompleto: asociado.fullName || "",
+      cargoEmpresa: asociado.cargoEmpresa || "",
+      sedeTrabajo: asociado.sedeTrabajo || "",
+      celular: asociado.cellPhone || asociado.celular || "",
+      correo: asociado.email || asociado.correo || "",
+      asociadoStatus: status,
+      motivoInhabilidad: status === "INHABIL" ? "Usuario inactivo en el sistema" : null,
+    });
   } catch (error) {
     console.error("Error obteniendo datos de asociado:", error);
     return NextResponse.json(

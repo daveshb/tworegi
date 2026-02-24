@@ -52,14 +52,20 @@ async function handleRequest(
         );
       }
 
-      const principales = postulacion.integrantes.filter(
+      const principalesIntegrantes = postulacion.integrantes.filter(
         (i) => i.tipoIntegrante === "PRINCIPAL"
       );
-      const suplentes = postulacion.integrantes.filter(
+      const suplentesIntegrantes = postulacion.integrantes.filter(
         (i) => i.tipoIntegrante === "SUPLENTE"
       );
+      const principales =
+        principalesIntegrantes.length +
+        (postulacion.lider.tipoIntegrante === "PRINCIPAL" ? 1 : 0);
+      const suplentes =
+        suplentesIntegrantes.length +
+        (postulacion.lider.tipoIntegrante === "SUPLENTE" ? 1 : 0);
 
-      if (principales.length !== 3 || suplentes.length !== 3) {
+      if (principales !== 3 || suplentes !== 3) {
         return NextResponse.json(
           { error: "Debe haber exactamente 3 principales y 3 suplentes" },
           { status: 400 }
@@ -90,19 +96,24 @@ async function handleRequest(
       { error: "Método no permitido" },
       { status: 405 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error procesando postulación Control Social:", error);
+    const parsedError = error as {
+      name?: string;
+      message?: string;
+      errors?: unknown;
+    };
 
-    if (error.name === "ZodError") {
+    if (parsedError.name === "ZodError") {
       return NextResponse.json(
-        { error: "Validación fallida", details: error.errors },
+        { error: "Validación fallida", details: parsedError.errors },
         { status: 400 }
       );
     }
 
-    if (error.name === "ValidationError") {
+    if (parsedError.name === "ValidationError") {
       return NextResponse.json(
-        { error: "Error de validación", details: error.message },
+        { error: "Error de validación", details: parsedError.message },
         { status: 400 }
       );
     }

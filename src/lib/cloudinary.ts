@@ -1,24 +1,40 @@
 import crypto from "crypto";
 
-/**
- * Genera una firma segura para upload directo a Cloudinary
- * Solo se ejecuta en servidor
- */
-export function generarFirmaCloudinary() {
-  const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-  const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
+function obtenerConfiguracionCloudinary() {
+  // Priorizar variables de servidor y mantener compatibilidad con prefijos NEXT_PUBLIC existentes.
+  const cloudName =
+    process.env.CLOUDINARY_CLOUD_NAME ??
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+  const apiKey =
+    process.env.CLOUDINARY_API_KEY ?? process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
 
   if (!cloudName || !apiKey || !apiSecret) {
     throw new Error(
-      "Variables de entorno de Cloudinary no configuradas correctamente"
+      "Variables de entorno de Cloudinary no configuradas correctamente (requiere CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY y CLOUDINARY_API_SECRET)"
     );
   }
 
+  return { cloudName, apiKey, apiSecret };
+}
+
+/**
+ * Genera una firma segura para upload directo a Cloudinary
+ * Solo se ejecuta en servidor
+ */
+export function generarFirmaCloudinary(resourceType: "raw" | "image" = "image") {
+  const { cloudName, apiKey, apiSecret } = obtenerConfiguracionCloudinary();
+
   const timestamp = Math.floor(Date.now() / 1000);
+  
+  // Definir carpeta según tipo de recurso
+  const folder = resourceType === "raw" 
+    ? "postulaciones/documentos" 
+    : "postulaciones/imagenes";
+
   const paramsToSign = {
     timestamp,
-    folder: "postulaciones",
+    folder,
   };
 
   // Crear string para firmar
@@ -37,7 +53,8 @@ export function generarFirmaCloudinary() {
     signature,
     apiKey,
     cloudName,
-    folder: "postulaciones",
+    folder,
+    resource_type: resourceType,
   };
 }
 

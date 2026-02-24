@@ -1,6 +1,7 @@
 "use client";
 
-import { useFieldArray, useFormContext, Controller } from "react-hook-form";
+import { useEffect } from "react";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { Trash2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { FileUpload } from "./file-upload";
@@ -13,21 +14,47 @@ interface IntegrantFormProps {
 }
 
 export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFormProps) {
-  const { control, watch, formState: { errors } } = useFormContext();
+  const { control, watch, setValue, formState: { errors } } = useFormContext();
   const { fields, append, remove } = useFieldArray({
     control,
     name: "integrantes",
   });
 
   const integrantes = watch("integrantes");
+  const lider = watch("lider");
 
   const canAddMore = integrantes.length < maxIntegrantes;
 
   const requiereEconomia = tipoPostulacion !== "APELACIONES";
   const requiereFormacion = tipoPostulacion === "JUNTA_DIRECTIVA";
+  const esJuntaDirectiva = tipoPostulacion === "JUNTA_DIRECTIVA";
+
+  const getTipoIntegranteAutomatico = (index: number) => {
+    // En Junta: posición 1 es líder (principal), la posición 2 inicia en suplente y alterna.
+    if (esJuntaDirectiva) {
+      return index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
+    }
+    if (tipoPostulacion === "APELACIONES") {
+      return "MIEMBRO";
+    }
+    return "PRINCIPAL";
+  };
+
+  const getTituloIntegrante = (index: number) => {
+    const numeroIntegrante = index + 2;
+    if (!esJuntaDirectiva) return `Integrante ${numeroIntegrante}`;
+
+    const tipo = getTipoIntegranteAutomatico(index);
+    if (tipo === "SUPLENTE") {
+      return `Integrante ${numeroIntegrante} (Suplente integrante ${numeroIntegrante - 1})`;
+    }
+
+    return `Integrante ${numeroIntegrante} (Principal)`;
+  };
 
   const handleAddIntegrante = () => {
     if (canAddMore) {
+      const nextIndex = fields.length;
       append({
         cedula: "",
         nombreCompleto: "",
@@ -35,16 +62,27 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
         sedeTrabajo: "",
         celular: "",
         correo: "",
-        tipoIntegrante: tipoPostulacion === "APELACIONES" ? "MIEMBRO" : "PRINCIPAL",
+        tipoIntegrante: getTipoIntegranteAutomatico(nextIndex),
         adjuntoCedula: null,
         certificadoEconomiaSolidaria: null,
         compromisoFirmado: null,
         soporteFormacionAcademica: null,
-        asociadoStatus: "NO_REGISTRADO",
+        asociadoStatus: null,
         motivoInhabilidad: "",
       });
     }
   };
+
+  useEffect(() => {
+    if (!esJuntaDirectiva) return;
+
+    integrantes.forEach((_: unknown, index: number) => {
+      const tipoEsperado = index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
+      setValue(`integrantes.${index}.tipoIntegrante`, tipoEsperado, {
+        shouldDirty: true,
+      });
+    });
+  }, [integrantes, esJuntaDirectiva, setValue]);
 
   const getTipoOptions = () => {
     if (tipoPostulacion === "APELACIONES") {
@@ -58,25 +96,11 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
 
   const tipoOptions = getTipoOptions();
 
-  const getRequiredFiles = (tipo: string) => {
-    const files = ["adjuntoCedula"];
-    
-    if (requiereEconomia) {
-      files.push("certificadoEconomiaSolidaria", "compromisoFirmado");
-    }
-    
-    if (requiereFormacion) {
-      files.push("soporteFormacionAcademica");
-    }
-    
-    return files;
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">
-          Integrantes {fields.length}/{maxIntegrantes}
+          Integrantes {1 + fields.length}/{maxIntegrantes + 1}
         </h3>
         <button
           type="button"
@@ -96,12 +120,89 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
 
       {fields.length === 0 && (
         <p className="text-sm text-gray-500 text-center py-8">
-          Haz clic en "Agregar integrante" para comenzar
+          Haz clic en Agregar integrante para comenzar
         </p>
       )}
 
+      {esJuntaDirectiva && (
+        <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
+          Secuencia automática Junta Directiva: #1 líder (principal), #2 suplente, #3 principal, #4 suplente...
+        </div>
+      )}
+
+      <div className="p-4 border border-green-200 rounded-lg bg-green-50">
+        <h4 className="text-base font-semibold text-green-900 mb-2">
+          Integrante 1 (Líder - {tipoPostulacion === "APELACIONES" ? "Miembro" : "Principal"})
+        </h4>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-green-800">
+          <p>
+            <span className="font-medium">Cédula:</span> {lider?.cedula || "Pendiente"}
+          </p>
+          <p>
+            <span className="font-medium">Nombre:</span> {lider?.nombreCompleto || "Pendiente"}
+          </p>
+          <p>
+            <span className="font-medium">Cargo:</span> {lider?.cargoEmpresa || "Pendiente"}
+          </p>
+          <p>
+            <span className="font-medium">Correo:</span> {lider?.correo || "Pendiente"}
+          </p>
+        </div>
+
+        <div className="mt-4 pt-4 border-t border-green-200 space-y-4">
+          <h5 className="text-sm font-semibold text-green-900">Documentos del Líder</h5>
+
+          <FileUpload
+            name={"lider.adjuntoCedula" as never}
+            label="Cédula del Líder (PDF)"
+            accept="application/pdf"
+            resourceType="raw"
+            required
+            helpText="Documento máximo 10MB"
+          />
+
+          {requiereEconomia && (
+            <>
+              <div className="text-sm text-green-800 font-medium">
+                Selecciona uno de los siguientes:
+              </div>
+              <FileUpload
+                name={"lider.certificadoEconomiaSolidaria" as never}
+                label="Certificado Economía Solidaria (PDF)"
+                accept="application/pdf"
+                resourceType="raw"
+                helpText="Documento máximo 10MB"
+              />
+
+              <FileUpload
+                name={"lider.compromisoFirmado" as never}
+                label="Compromiso Firmado (PDF)"
+                accept="application/pdf"
+                resourceType="raw"
+                helpText="Documento máximo 10MB"
+              />
+            </>
+          )}
+
+          {requiereFormacion && (
+            <FileUpload
+              name={"lider.soporteFormacionAcademica" as never}
+              label="Soporte Formación Académica (PDF)"
+              accept="application/pdf"
+              resourceType="raw"
+              required
+              helpText="Documento máximo 10MB"
+            />
+          )}
+        </div>
+      </div>
+
       {fields.map((field, index) => {
-        const fieldError = (errors.integrantes as any)?.[index];
+        const fieldError = (
+          errors.integrantes as
+            | Array<Record<string, { message?: string }>>
+            | undefined
+        )?.[index];
         const integranteStatus = integrantes?.[index]?.asociadoStatus;
         const isHabil = integranteStatus === "HABIL";
 
@@ -112,7 +213,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
           >
             <div className="flex justify-between items-center mb-4">
               <h4 className="text-base font-medium text-gray-900">
-                Integrante {index + 1}
+                {getTituloIntegrante(index)}
               </h4>
               <button
                 type="button"
@@ -237,19 +338,28 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Rol<span className="text-red-500">*</span>
                     </label>
-                    <select
-                      {...control.register(`integrantes.${index}.tipoIntegrante` as const, {
-                        required: "Tipo es requerido",
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Seleccionar...</option>
-                      {tipoOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
+                    {esJuntaDirectiva ? (
+                      <input
+                        type="text"
+                        value={getTipoIntegranteAutomatico(index) === "SUPLENTE" ? "Suplente" : "Principal"}
+                        readOnly
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-700 cursor-not-allowed"
+                      />
+                    ) : (
+                      <select
+                        {...control.register(`integrantes.${index}.tipoIntegrante` as const, {
+                          required: "Tipo es requerido",
+                        })}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Seleccionar...</option>
+                        {tipoOptions.map((opt) => (
+                          <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
 
                   {/* Archivos */}
@@ -257,7 +367,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                     <h5 className="text-sm font-medium text-gray-900">Documentos</h5>
 
                     <FileUpload
-                      name={`integrantes.${index}.adjuntoCedula` as any}
+                      name={`integrantes.${index}.adjuntoCedula` as never}
                       label="Cédula (PDF)"
                       accept="application/pdf"
                       resourceType="raw"
@@ -271,7 +381,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                           Selecciona uno de los siguientes:
                         </div>
                         <FileUpload
-                          name={`integrantes.${index}.certificadoEconomiaSolidaria` as any}
+                          name={`integrantes.${index}.certificadoEconomiaSolidaria` as never}
                           label="Certificado Economía Solidaria (PDF)"
                           accept="application/pdf"
                           resourceType="raw"
@@ -279,7 +389,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                         />
 
                         <FileUpload
-                          name={`integrantes.${index}.compromisoFirmado` as any}
+                          name={`integrantes.${index}.compromisoFirmado` as never}
                           label="Compromiso Firmado (PDF)"
                           accept="application/pdf"
                           resourceType="raw"
@@ -290,7 +400,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
 
                     {requiereFormacion && (
                       <FileUpload
-                        name={`integrantes.${index}.soporteFormacionAcademica` as any}
+                        name={`integrantes.${index}.soporteFormacionAcademica` as never}
                         label="Soporte Formación Académica (PDF)"
                         accept="application/pdf"
                         resourceType="raw"
@@ -302,20 +412,24 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                 </>
               )}
 
-              {integranteStatus === "NO_REGISTRADO" && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-sm text-yellow-800">
-                    Esta cédula no está registrada. Valida otra cédula.
-                  </p>
-                </div>
-              )}
+              {integranteStatus && integranteStatus !== "HABIL" && (
+                <>
+                  {integranteStatus === "NO_REGISTRADO" && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm text-yellow-800">
+                        Esta cédula no está registrada. Valida otra cédula.
+                      </p>
+                    </div>
+                  )}
 
-              {integranteStatus === "INHABIL" && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-sm text-red-800">
-                    Esta cédula no es elegible para participar.
-                  </p>
-                </div>
+                  {integranteStatus === "INHABIL" && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                      <p className="text-sm text-red-800">
+                        Esta cédula no es elegible para participar.
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

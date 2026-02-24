@@ -30,15 +30,7 @@ const postulacionJuntaSchema = new Schema<IPostulacionJunta>(
         validator: function (integrantes: IIntegrante[]) {
           // Debe haber exactamente 9 integrantes más (total 10 con líder)
           if (integrantes.length > 9) return false;
-          
-          // Validar distribución: 5 principales y 5 suplentes (en total con líder 6-4 o 5-5)
-          const principales = integrantes.filter(
-            (i) => i.tipoIntegrante === "PRINCIPAL"
-          );
-          const suplentes = integrantes.filter(
-            (i) => i.tipoIntegrante === "SUPLENTE"
-          );
-          
+
           // Permitir que se construya gradualmente
           return true;
         },
@@ -80,15 +72,36 @@ postulacionJuntaSchema.pre("save", function (next) {
     }
 
     // Validar distribución: 5 principales + 5 suplentes
-    const principales = this.integrantes.filter(
+    const principalesIntegrantes = this.integrantes.filter(
       (i) => i.tipoIntegrante === "PRINCIPAL"
     ).length;
-    const suplentes = this.integrantes.filter(
+    const suplentesIntegrantes = this.integrantes.filter(
       (i) => i.tipoIntegrante === "SUPLENTE"
     ).length;
+    const principales =
+      (this.lider.tipoIntegrante === "PRINCIPAL" ? 1 : 0) +
+      principalesIntegrantes;
+    const suplentes =
+      (this.lider.tipoIntegrante === "SUPLENTE" ? 1 : 0) +
+      suplentesIntegrantes;
 
     if (principales !== 5 || suplentes !== 5) {
       throw new Error("Junta Directiva debe tener exactamente 5 principales y 5 suplentes");
+    }
+
+    if (this.lider.tipoIntegrante !== "PRINCIPAL") {
+      throw new Error("El líder de Junta Directiva debe ser principal");
+    }
+
+    const secuenciaValida = this.integrantes.every((integrante, index) => {
+      const tipoEsperado = index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
+      return integrante.tipoIntegrante === tipoEsperado;
+    });
+
+    if (!secuenciaValida) {
+      throw new Error(
+        "La secuencia para Junta debe ser: líder principal y luego suplente/principal alternados"
+      );
     }
 
     // Validar cédulas únicas

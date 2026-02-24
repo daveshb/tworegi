@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CheckCircle, AlertCircle, Save, Send } from "lucide-react";
+import { CheckCircle, AlertCircle, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   postulacionJuntaSchema,
@@ -71,7 +71,6 @@ export default function NuevaPostulacionPage() {
   const [tipoPostulacion, setTipoPostulacion] = useState<TipoPostulacion | null>(null);
   const [currentStep, setCurrentStep] = useState(1); // 1: Líder, 2: Integrantes, 3: Declaraciones
   const [liderStatus, setLiderStatus] = useState<"HABIL" | "NO_REGISTRADO" | "INHABIL" | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,7 +91,7 @@ export default function NuevaPostulacionPage() {
     }
   }, [tipoPostulacion]);
 
-  const defaultValues: any = {
+  const defaultValues = {
     lider: {
       cedula: "",
       nombreCompleto: "",
@@ -105,7 +104,7 @@ export default function NuevaPostulacionPage() {
       certificadoEconomiaSolidaria: null,
       compromisoFirmado: null,
       soporteFormacionAcademica: null,
-      asociadoStatus: "NO_REGISTRADO",
+      asociadoStatus: null,
       motivoInhabilidad: "",
     },
     integrantes: [],
@@ -115,13 +114,14 @@ export default function NuevaPostulacionPage() {
     estado: "DRAFT",
   };
 
-  const methods = useForm<any>({
-    resolver: schema ? zodResolver(schema) : undefined,
+  const methods = useForm({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: schema ? zodResolver(schema as any) : undefined,
     mode: "onChange",
     defaultValues,
   });
 
-  const { handleSubmit, watch, formState: { isValid, isDirty } } = methods;
+  const { handleSubmit, watch, formState: { isValid } } = methods;
 
   const integrantes = watch("integrantes");
   const compromisosInstitucionales = watch("compromisosInstitucionales");
@@ -129,19 +129,77 @@ export default function NuevaPostulacionPage() {
   const responsabilidadLider = watch("responsabilidadLider");
   const liderData = watch("lider");
 
+  const esSecuenciaJuntaValida = (integrantesActuales: IIntegrante[]) =>
+    integrantesActuales.every((integrante, index) => {
+      const tipoEsperado = index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
+      return integrante.tipoIntegrante === tipoEsperado;
+    });
+
+  // Validar si el líder está habilitado (validado en cédula)
+  const isLiderHabil = useMemo(() => {
+    return liderStatus === "HABIL";
+  }, [liderStatus]);
+
+  // Validar si el líder está completo (todos los campos llenos)
+  const isLiderComplete = useMemo(() => {
+    if (liderStatus !== "HABIL") return false;
+    
+    const requiereEconomia = config?.requiereEconomia ?? false;
+    const requiereFormacion = config?.requiereFormacion ?? false;
+
+    const baseCamposComplete = 
+      liderData.nombreCompleto &&
+      liderData.cargoEmpresa &&
+      liderData.sedeTrabajo &&
+      liderData.celular &&
+      liderData.correo &&
+      liderData.adjuntoCedula;
+
+    if (!baseCamposComplete) return false;
+
+    if (requiereEconomia) {
+      const tieneDocumentoEconomia = liderData.certificadoEconomiaSolidaria || liderData.compromisoFirmado;
+      if (!tieneDocumentoEconomia) return false;
+    }
+
+    if (requiereFormacion) {
+      if (!liderData.soporteFormacionAcademica) return false;
+    }
+
+    return true;
+  }, [liderStatus, liderData, config]);
+
   // Validar que el formulario esté completo para enviar
   const canSubmit = useMemo(() => {
-    if (!config || !liderStatus || liderStatus !== "HABIL") return false;
+    if (!config) return false;
+    
+    // Verificar que el líder esté completamente lleno
+    if (!isLiderComplete) return false;
 
     const totalIntegrantes = 1 + integrantes.length;
     if (totalIntegrantes !== config.maxIntegrantes + 1) return false;
 
     if (config.suplentesRequired) {
-      const principales = integrantes.filter((i: any) => i.tipoIntegrante === "PRINCIPAL").length;
-      const suplentes = integrantes.filter((i: any) => i.tipoIntegrante === "SUPLENTE").length;
+      const principalesIntegrantes = integrantes.filter(
+        (i: IIntegrante) => i.tipoIntegrante === "PRINCIPAL"
+      ).length;
+      const suplentesIntegrantes = integrantes.filter(
+        (i: IIntegrante) => i.tipoIntegrante === "SUPLENTE"
+      ).length;
+      const principales =
+        (liderData.tipoIntegrante === "PRINCIPAL" ? 1 : 0) +
+        principalesIntegrantes;
+      const suplentes =
+        (liderData.tipoIntegrante === "SUPLENTE" ? 1 : 0) +
+        suplentesIntegrantes;
       if (principales !== config.principalesRequired || suplentes !== config.suplentesRequired) {
         return false;
       }
+    }
+
+    if (tipoPostulacion === "JUNTA_DIRECTIVA") {
+      if (liderData.tipoIntegrante !== "PRINCIPAL") return false;
+      if (!esSecuenciaJuntaValida(integrantes as IIntegrante[])) return false;
     }
 
     if (!compromisosInstitucionales || !autorizacionAntecedentes || !responsabilidadLider) {
@@ -149,9 +207,20 @@ export default function NuevaPostulacionPage() {
     }
 
     return isValid;
-  }, [config, liderStatus, integrantes, isValid, compromisosInstitucionales, autorizacionAntecedentes, responsabilidadLider]);
+  }, [
+    config,
+    isLiderComplete,
+    integrantes,
+    isValid,
+    compromisosInstitucionales,
+    autorizacionAntecedentes,
+    responsabilidadLider,
+    liderData.tipoIntegrante,
+    tipoPostulacion,
+  ]);
 
-  const onSubmit = async (data: PostulacionFormType) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onSubmit = async (data: any) => {
     try {
       setIsSubmitting(true);
       setError(null);
@@ -172,7 +241,7 @@ export default function NuevaPostulacionPage() {
       const response = await fetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, estado: "ENVIADA" }),
       });
 
       if (!response.ok) {
@@ -189,46 +258,6 @@ export default function NuevaPostulacionPage() {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const onSaveDraft = async (data: PostulacionFormType) => {
-    try {
-      setIsSaving(true);
-      setError(null);
-
-      const endpoint = `
-        /api/postulaciones/${
-          tipoPostulacion === "JUNTA_DIRECTIVA"
-            ? "junta-directiva"
-            : tipoPostulacion === "CONTROL_SOCIAL"
-            ? "control-social"
-            : "comite-apelaciones"
-        }${postulacionId ? `/${postulacionId}` : ""}
-      `.trim();
-
-      const method = postulacionId ? "PUT" : "POST";
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, estado: "DRAFT" }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error guardando borrador");
-      }
-
-      const result = await response.json();
-      setPostulacionId(result._id);
-      setSaveSuccess(true);
-
-      setTimeout(() => setSaveSuccess(false), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -304,7 +333,7 @@ export default function NuevaPostulacionPage() {
               <div key={item.step} className="flex items-center flex-1">
                 <button
                   onClick={() => {
-                    if (item.step < currentStep || (item.step === 2 && liderStatus === "HABIL")) {
+                    if (item.step < currentStep || (item.step === 2 && isLiderHabil)) {
                       setCurrentStep(item.step);
                     }
                   }}
@@ -312,7 +341,7 @@ export default function NuevaPostulacionPage() {
                     "flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all",
                     currentStep === item.step
                       ? "bg-blue-600 text-white"
-                      : item.step < currentStep || (item.step === 2 && liderStatus === "HABIL")
+                      : item.step < currentStep || (item.step === 2 && isLiderHabil)
                       ? "bg-green-600 text-white cursor-pointer"
                       : "bg-gray-300 text-gray-600"
                   )}
@@ -348,28 +377,20 @@ export default function NuevaPostulacionPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (liderStatus === "HABIL") {
+                      if (isLiderHabil) {
                         setCurrentStep(2);
                       }
                     }}
-                    disabled={liderStatus !== "HABIL"}
+                    disabled={!isLiderHabil}
                     className={cn(
                       "flex-1 px-6 py-3 rounded-md font-medium transition-colors",
-                      liderStatus === "HABIL"
+                      isLiderHabil
                         ? "bg-blue-600 text-white hover:bg-blue-700"
                         : "bg-gray-300 text-gray-600 cursor-not-allowed"
                     )}
+                    title={!isLiderHabil ? "Valida la cédula del líder para continuar" : ""}
                   >
                     Siguiente
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSaveDraft(methods.getValues())}
-                    disabled={!isDirty || isSaving}
-                    className="px-6 py-3 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSaving ? "Guardando..." : "Guardar borrador"}
                   </button>
                 </div>
               </div>
@@ -397,6 +418,15 @@ export default function NuevaPostulacionPage() {
                     onClick={() => {
                       const totalIntegrantes = 1 + integrantes.length;
                       if (totalIntegrantes === config.maxIntegrantes + 1) {
+                        if (
+                          tipoPostulacion === "JUNTA_DIRECTIVA" &&
+                          !esSecuenciaJuntaValida(integrantes as IIntegrante[])
+                        ) {
+                          setError(
+                            "La secuencia de Junta debe ser: líder principal, luego suplente/principal alternados"
+                          );
+                          return;
+                        }
                         setCurrentStep(3);
                       } else {
                         setError(`Debes tener exactamente ${config.maxIntegrantes + 1} integrantes`);
@@ -405,15 +435,6 @@ export default function NuevaPostulacionPage() {
                     className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 transition-colors disabled:opacity-50"
                   >
                     Siguiente
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onSaveDraft(methods.getValues())}
-                    disabled={!isDirty || isSaving}
-                    className="px-6 py-3 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
-                  >
-                    <Save className="w-4 h-4" />
-                    {isSaving ? "Guardando..." : "Guardar borrador"}
                   </button>
                 </div>
               </div>
@@ -439,10 +460,10 @@ export default function NuevaPostulacionPage() {
                         <span className="font-medium">Líder:</span> {liderData.nombreCompleto || "(pendiente)"}
                       </p>
                       <p>
-                        <span className="font-medium">Integrantes:</span> {integrantes.length}/{config?.maxIntegrantes}
+                        <span className="font-medium">Integrantes totales:</span> {1 + integrantes.length}/{(config?.maxIntegrantes ?? 0) + 1}
                       </p>
                       <p>
-                        <span className="font-medium">Estado:</span> BORRADOR
+                        <span className="font-medium">Estado:</span> LISTA PARA GUARDAR
                       </p>
                     </div>
                   </div>
@@ -456,21 +477,12 @@ export default function NuevaPostulacionPage() {
                       Anterior
                     </button>
                     <button
-                      type="button"
-                      onClick={() => onSaveDraft(methods.getValues())}
-                      disabled={!isDirty || isSaving}
-                      className="flex-1 px-6 py-3 border border-gray-300 rounded-md font-medium text-gray-700 hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                    >
-                      <Save className="w-4 h-4" />
-                      {isSaving ? "Guardando..." : "Guardar borrador"}
-                    </button>
-                    <button
                       type="submit"
                       disabled={!canSubmit || isSubmitting}
                       className="flex-1 px-6 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <Send className="w-4 h-4" />
-                      {isSubmitting ? "Enviando..." : "Enviar postulación"}
+                      <Save className="w-4 h-4" />
+                      {isSubmitting ? "Guardando..." : "Guardar"}
                     </button>
                   </div>
                 </div>
@@ -485,7 +497,7 @@ export default function NuevaPostulacionPage() {
             <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
             <div>
               <p className="font-medium text-green-900">¡Guardado exitosamente!</p>
-              <p className="text-sm text-green-800">Tu postulación se guardó como borrador</p>
+              <p className="text-sm text-green-800">Tu postulación fue guardada correctamente</p>
             </div>
           </div>
         )}

@@ -69,12 +69,18 @@ postulacionControlSchema.pre("save", function (next) {
     }
 
     // Validar distribución: 3 principales + 3 suplentes
-    const principales = this.integrantes.filter(
+    const principalesIntegrantes = this.integrantes.filter(
       (i) => i.tipoIntegrante === "PRINCIPAL"
     ).length;
-    const suplentes = this.integrantes.filter(
+    const suplentesIntegrantes = this.integrantes.filter(
       (i) => i.tipoIntegrante === "SUPLENTE"
     ).length;
+    const principales =
+      (this.lider.tipoIntegrante === "PRINCIPAL" ? 1 : 0) +
+      principalesIntegrantes;
+    const suplentes =
+      (this.lider.tipoIntegrante === "SUPLENTE" ? 1 : 0) +
+      suplentesIntegrantes;
 
     if (principales !== 3 || suplentes !== 3) {
       throw new Error("Control Social debe tener exactamente 3 principales y 3 suplentes");
