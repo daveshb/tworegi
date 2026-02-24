@@ -52,16 +52,44 @@ async function handleRequest(
         );
       }
 
-      const principales = postulacion.integrantes.filter(
+      const principalesIntegrantes = postulacion.integrantes.filter(
         (i) => i.tipoIntegrante === "PRINCIPAL"
       );
-      const suplentes = postulacion.integrantes.filter(
+      const suplentesIntegrantes = postulacion.integrantes.filter(
         (i) => i.tipoIntegrante === "SUPLENTE"
       );
+      const principales =
+        principalesIntegrantes.length +
+        (postulacion.lider.tipoIntegrante === "PRINCIPAL" ? 1 : 0);
+      const suplentes =
+        suplentesIntegrantes.length +
+        (postulacion.lider.tipoIntegrante === "SUPLENTE" ? 1 : 0);
 
-      if (principales.length !== 5 || suplentes.length !== 5) {
+      if (principales !== 5 || suplentes !== 5) {
         return NextResponse.json(
           { error: "Debe haber exactamente 5 principales y 5 suplentes" },
+          { status: 400 }
+        );
+      }
+
+      if (postulacion.lider.tipoIntegrante !== "PRINCIPAL") {
+        return NextResponse.json(
+          { error: "El líder de Junta Directiva debe ser principal" },
+          { status: 400 }
+        );
+      }
+
+      const secuenciaValida = postulacion.integrantes.every((integrante, index) => {
+        const tipoEsperado = index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
+        return integrante.tipoIntegrante === tipoEsperado;
+      });
+
+      if (!secuenciaValida) {
+        return NextResponse.json(
+          {
+            error:
+              "La secuencia para Junta debe ser: líder principal y luego suplente/principal alternados",
+          },
           { status: 400 }
         );
       }
@@ -90,19 +118,24 @@ async function handleRequest(
       { error: "Método no permitido" },
       { status: 405 }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error procesando postulación Junta:", error);
+    const parsedError = error as {
+      name?: string;
+      message?: string;
+      errors?: unknown;
+    };
 
-    if (error.name === "ZodError") {
+    if (parsedError.name === "ZodError") {
       return NextResponse.json(
-        { error: "Validación fallida", details: error.errors },
+        { error: "Validación fallida", details: parsedError.errors },
         { status: 400 }
       );
     }
 
-    if (error.name === "ValidationError") {
+    if (parsedError.name === "ValidationError") {
       return NextResponse.json(
-        { error: "Error de validación", details: error.message },
+        { error: "Error de validación", details: parsedError.message },
         { status: 400 }
       );
     }

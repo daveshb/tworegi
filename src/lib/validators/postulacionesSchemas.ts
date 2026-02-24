@@ -75,18 +75,41 @@ export const postulacionJuntaSchema = z
   .refine(
     (data) => {
       if (data.estado === "ENVIADA") {
-        const principales = data.integrantes.filter(
+        const principalesIntegrantes = data.integrantes.filter(
           (i) => i.tipoIntegrante === "PRINCIPAL"
         ).length;
-        const suplentes = data.integrantes.filter(
+        const suplentesIntegrantes = data.integrantes.filter(
           (i) => i.tipoIntegrante === "SUPLENTE"
         ).length;
+        const principales =
+          (data.lider.tipoIntegrante === "PRINCIPAL" ? 1 : 0) +
+          principalesIntegrantes;
+        const suplentes =
+          (data.lider.tipoIntegrante === "SUPLENTE" ? 1 : 0) +
+          suplentesIntegrantes;
         return principales === 5 && suplentes === 5;
       }
       return true;
     },
     {
       message: "Junta debe tener exactamente 5 principales y 5 suplentes",
+      path: ["integrantes"],
+    }
+  )
+  .refine(
+    (data) => {
+      if (data.estado === "ENVIADA") {
+        if (data.lider.tipoIntegrante !== "PRINCIPAL") return false;
+        return data.integrantes.every((integrante, index) => {
+          const tipoEsperado = index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
+          return integrante.tipoIntegrante === tipoEsperado;
+        });
+      }
+      return true;
+    },
+    {
+      message:
+        "La secuencia para Junta debe ser: líder principal, luego suplente/principal alternados",
       path: ["integrantes"],
     }
   )
@@ -151,12 +174,18 @@ export const postulacionControlSchema = z
   .refine(
     (data) => {
       if (data.estado === "ENVIADA") {
-        const principales = data.integrantes.filter(
+        const principalesIntegrantes = data.integrantes.filter(
           (i) => i.tipoIntegrante === "PRINCIPAL"
         ).length;
-        const suplentes = data.integrantes.filter(
+        const suplentesIntegrantes = data.integrantes.filter(
           (i) => i.tipoIntegrante === "SUPLENTE"
         ).length;
+        const principales =
+          (data.lider.tipoIntegrante === "PRINCIPAL" ? 1 : 0) +
+          principalesIntegrantes;
+        const suplentes =
+          (data.lider.tipoIntegrante === "SUPLENTE" ? 1 : 0) +
+          suplentesIntegrantes;
         return principales === 3 && suplentes === 3;
       }
       return true;

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("Error generando firma Cloudinary:", error);
     return NextResponse.json(
-      { error: "Error generando firma de upload" },
+      { error: error instanceof Error ? error.message : "Error generando firma de upload" },
       { status: 500 }
     );
   }
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error generando firma Cloudinary:", error);
     return NextResponse.json(
-      { error: "Error generando firma de upload" },
+      { error: error instanceof Error ? error.message : "Error generando firma de upload" },
       { status: 500 }
     );
   }

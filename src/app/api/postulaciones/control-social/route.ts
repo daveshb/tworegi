@@ -11,25 +11,30 @@ export async function POST(request: NextRequest) {
 
     const datosValidados = postulacionControlSchema.parse({
       ...body,
-      estado: "DRAFT",
+      estado: body.estado || "DRAFT",
     });
 
     const nuevaPostulacion = await PostulacionControl.create(datosValidados);
 
     return NextResponse.json(nuevaPostulacion, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creando postulación Control Social:", error);
+    const parsedError = error as {
+      name?: string;
+      message?: string;
+      errors?: unknown;
+    };
 
-    if (error.name === "ZodError") {
+    if (parsedError.name === "ZodError") {
       return NextResponse.json(
-        { error: "Validación fallida", details: error.errors },
+        { error: "Validación fallida", details: parsedError.errors },
         { status: 400 }
       );
     }
 
-    if (error.name === "ValidationError") {
+    if (parsedError.name === "ValidationError") {
       return NextResponse.json(
-        { error: "Error de validación", details: error.message },
+        { error: "Error de validación", details: parsedError.message },
         { status: 400 }
       );
     }
