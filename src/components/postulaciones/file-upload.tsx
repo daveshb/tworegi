@@ -58,7 +58,7 @@ export function FileUpload<T extends Record<string, any>>({
         }
 
         // Obtener firma de Cloudinary
-        const signatureResponse = await fetch("/api/uploads/signature");
+        const signatureResponse = await fetch(`/api/uploads/signature?resourceType=${resourceType}`);
         if (!signatureResponse.ok) {
           throw new Error("No se pudo obtener firma de Cloudinary");
         }
@@ -75,7 +75,8 @@ export function FileUpload<T extends Record<string, any>>({
         formData.append("resource_type", resourceType);
 
         // Subir a Cloudinary
-        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`;
+        const uploadPath = resourceType === "raw" ? "raw" : "image";
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/${uploadPath}/upload`;
         const uploadResponse = await fetch(uploadUrl, {
           method: "POST",
           body: formData,

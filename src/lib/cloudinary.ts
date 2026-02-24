@@ -4,7 +4,7 @@ import crypto from "crypto";
  * Genera una firma segura para upload directo a Cloudinary
  * Solo se ejecuta en servidor
  */
-export function generarFirmaCloudinary() {
+export function generarFirmaCloudinary(resourceType: "raw" | "image" = "image") {
   const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
   const apiKey = process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY;
   const apiSecret = process.env.CLOUDINARY_API_SECRET;
@@ -16,9 +16,16 @@ export function generarFirmaCloudinary() {
   }
 
   const timestamp = Math.floor(Date.now() / 1000);
+  
+  // Definir carpeta según tipo de recurso
+  const folder = resourceType === "raw" 
+    ? "postulaciones/documentos" 
+    : "postulaciones/imagenes";
+
   const paramsToSign = {
     timestamp,
-    folder: "postulaciones",
+    folder,
+    resource_type: resourceType,
   };
 
   // Crear string para firmar
@@ -37,7 +44,8 @@ export function generarFirmaCloudinary() {
     signature,
     apiKey,
     cloudName,
-    folder: "postulaciones",
+    folder,
+    resource_type: resourceType,
   };
 }
 

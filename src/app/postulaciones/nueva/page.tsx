@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useForm, FormProvider } from "react-hook-form";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { useForm, FormProvider, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, AlertCircle, Save, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -76,6 +76,7 @@ export default function NuevaPostulacionPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [postulacionId, setPostulacionId] = useState<string | null>(null);
+  const liderAddedRef = useRef(false);
 
   const config = tipoPostulacion ? POSTULACIONES[tipoPostulacion] : null;
 
@@ -105,7 +106,7 @@ export default function NuevaPostulacionPage() {
       certificadoEconomiaSolidaria: null,
       compromisoFirmado: null,
       soporteFormacionAcademica: null,
-      asociadoStatus: "NO_REGISTRADO",
+      asociadoStatus: null,
       motivoInhabilidad: "",
     },
     integrantes: [],
@@ -121,7 +122,7 @@ export default function NuevaPostulacionPage() {
     defaultValues,
   });
 
-  const { handleSubmit, watch, formState: { isValid, isDirty } } = methods;
+  const { handleSubmit, watch, formState: { isValid, isDirty }, control } = methods;
 
   const integrantes = watch("integrantes");
   const compromisosInstitucionales = watch("compromisosInstitucionales");
@@ -129,9 +130,81 @@ export default function NuevaPostulacionPage() {
   const responsabilidadLider = watch("responsabilidadLider");
   const liderData = watch("lider");
 
+  // Hook para agregar/remover el líder de los integrantes
+  const { append, remove } = useFieldArray({
+    control,
+    name: "integrantes",
+  });
+
+  // Efecto para agregar el líder como primer integrante cuando sea validado como HABIL
+  useEffect(() => {
+    if (liderStatus === "HABIL" && integrantes.length === 0 && liderData.cedula && !liderAddedRef.current) {
+      liderAddedRef.current = true;
+      
+      // Agregar el líder como el primer integrante
+      append({
+        cedula: liderData.cedula,
+        nombreCompleto: liderData.nombreCompleto || "",
+        cargoEmpresa: liderData.cargoEmpresa || "",
+        sedeTrabajo: liderData.sedeTrabajo || "",
+        celular: liderData.celular || "",
+        correo: liderData.correo || "",
+        tipoIntegrante: tipoPostulacion === "APELACIONES" ? "MIEMBRO" : "PRINCIPAL",
+        adjuntoCedula: liderData.adjuntoCedula || null,
+        certificadoEconomiaSolidaria: liderData.certificadoEconomiaSolidaria || null,
+        compromisoFirmado: liderData.compromisoFirmado || null,
+        soporteFormacionAcademica: liderData.soporteFormacionAcademica || null,
+        asociadoStatus: liderData.asociadoStatus || "HABIL",
+        motivoInhabilidad: "",
+      });
+    }
+  }, [liderStatus, liderData.cedula, tipoPostulacion]);
+
+  // Resetear liderAddedRef cuando cambia el tipo de postulación
+  useEffect(() => {
+    liderAddedRef.current = false;
+  }, [tipoPostulacion]);
+
+  // Validar si el líder está habilitado (validado en cédula)
+  const isLiderHabil = useMemo(() => {
+    return liderStatus === "HABIL";
+  }, [liderStatus]);
+
+  // Validar si el líder está completo (todos los campos llenos)
+  const isLiderComplete = useMemo(() => {
+    if (liderStatus !== "HABIL") return false;
+    
+    const requiereEconomia = config?.requiereEconomia ?? false;
+    const requiereFormacion = config?.requiereFormacion ?? false;
+
+    const baseCamposComplete = 
+      liderData.nombreCompleto &&
+      liderData.cargoEmpresa &&
+      liderData.sedeTrabajo &&
+      liderData.celular &&
+      liderData.correo &&
+      liderData.adjuntoCedula;
+
+    if (!baseCamposComplete) return false;
+
+    if (requiereEconomia) {
+      const tieneDocumentoEconomia = liderData.certificadoEconomiaSolidaria || liderData.compromisoFirmado;
+      if (!tieneDocumentoEconomia) return false;
+    }
+
+    if (requiereFormacion) {
+      if (!liderData.soporteFormacionAcademica) return false;
+    }
+
+    return true;
+  }, [liderStatus, liderData, config]);
+
   // Validar que el formulario esté completo para enviar
   const canSubmit = useMemo(() => {
-    if (!config || !liderStatus || liderStatus !== "HABIL") return false;
+    if (!config) return false;
+    
+    // Verificar que el líder esté completamente lleno
+    if (!isLiderComplete) return false;
 
     const totalIntegrantes = 1 + integrantes.length;
     if (totalIntegrantes !== config.maxIntegrantes + 1) return false;
@@ -149,7 +222,7 @@ export default function NuevaPostulacionPage() {
     }
 
     return isValid;
-  }, [config, liderStatus, integrantes, isValid, compromisosInstitucionales, autorizacionAntecedentes, responsabilidadLider]);
+  }, [config, isLiderComplete, integrantes, isValid, compromisosInstitucionales, autorizacionAntecedentes, responsabilidadLider]);
 
   const onSubmit = async (data: PostulacionFormType) => {
     try {
@@ -278,6 +351,7 @@ export default function NuevaPostulacionPage() {
         <div className="mb-8">
           <button
             onClick={() => {
+              liderAddedRef.current = false;
               setTipoPostulacion(null);
               setCurrentStep(1);
               setLiderStatus(null);
@@ -304,7 +378,7 @@ export default function NuevaPostulacionPage() {
               <div key={item.step} className="flex items-center flex-1">
                 <button
                   onClick={() => {
-                    if (item.step < currentStep || (item.step === 2 && liderStatus === "HABIL")) {
+                    if (item.step < currentStep || (item.step === 2 && isLiderHabil)) {
                       setCurrentStep(item.step);
                     }
                   }}
@@ -312,7 +386,7 @@ export default function NuevaPostulacionPage() {
                     "flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all",
                     currentStep === item.step
                       ? "bg-blue-600 text-white"
-                      : item.step < currentStep || (item.step === 2 && liderStatus === "HABIL")
+                      : item.step < currentStep || (item.step === 2 && isLiderHabil)
                       ? "bg-green-600 text-white cursor-pointer"
                       : "bg-gray-300 text-gray-600"
                   )}
@@ -348,17 +422,18 @@ export default function NuevaPostulacionPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (liderStatus === "HABIL") {
+                      if (isLiderHabil) {
                         setCurrentStep(2);
                       }
                     }}
-                    disabled={liderStatus !== "HABIL"}
+                    disabled={!isLiderHabil}
                     className={cn(
                       "flex-1 px-6 py-3 rounded-md font-medium transition-colors",
-                      liderStatus === "HABIL"
+                      isLiderHabil
                         ? "bg-blue-600 text-white hover:bg-blue-700"
                         : "bg-gray-300 text-gray-600 cursor-not-allowed"
                     )}
+                    title={!isLiderHabil ? "Valida la cédula del líder para continuar" : ""}
                   >
                     Siguiente
                   </button>
@@ -439,7 +514,7 @@ export default function NuevaPostulacionPage() {
                         <span className="font-medium">Líder:</span> {liderData.nombreCompleto || "(pendiente)"}
                       </p>
                       <p>
-                        <span className="font-medium">Integrantes:</span> {integrantes.length}/{config?.maxIntegrantes}
+                        <span className="font-medium">Integrantes totales:</span> {1 + integrantes.length}/{(config?.maxIntegrantes ?? 0) + 1}
                       </p>
                       <p>
                         <span className="font-medium">Estado:</span> BORRADOR

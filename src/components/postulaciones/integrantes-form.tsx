@@ -40,7 +40,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
         certificadoEconomiaSolidaria: null,
         compromisoFirmado: null,
         soporteFormacionAcademica: null,
-        asociadoStatus: "NO_REGISTRADO",
+        asociadoStatus: null,
         motivoInhabilidad: "",
       });
     }
@@ -76,7 +76,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900">
-          Integrantes {fields.length}/{maxIntegrantes}
+          Integrantes {1 + fields.length}/{maxIntegrantes + 1}
         </h3>
         <button
           type="button"
@@ -302,20 +302,24 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                 </>
               )}
 
-              {integranteStatus === "NO_REGISTRADO" && (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <p className="text-sm text-yellow-800">
-                    Esta cédula no está registrada. Valida otra cédula.
-                  </p>
-                </div>
-              )}
+              {integranteStatus && integranteStatus !== "HABIL" && (
+                <>
+                  {integranteStatus === "NO_REGISTRADO" && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm text-yellow-800">
+                        Esta cédula no está registrada. Valida otra cédula.
+                      </p>
+                    </div>
+                  )}
 
-              {integranteStatus === "INHABIL" && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                  <p className="text-sm text-red-800">
-                    Esta cédula no es elegible para participar.
-                  </p>
-                </div>
+                  {integranteStatus === "INHABIL" && (
+                    <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                      <p className="text-sm text-red-800">
+                        Esta cédula no es elegible para participar.
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           </div>

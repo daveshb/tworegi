@@ -12,10 +12,27 @@ interface LiderFormProps {
 export function LiderForm({ tipoPostulacion, onLiderValidated }: LiderFormProps) {
   const { watch, formState: { errors }, register } = useFormContext();
   const liderStatus = watch("lider.asociadoStatus");
+  const liderData = watch("lider");
   const isHabil = liderStatus === "HABIL";
 
   const requiereEconomia = tipoPostulacion !== "APELACIONES";
   const requiereFormacion = tipoPostulacion === "JUNTA_DIRECTIVA";
+
+  // Calcular campos faltantes del líder
+  const camposFaltantes: string[] = [];
+  if (isHabil) {
+    if (!liderData.nombreCompleto) camposFaltantes.push("Nombre Completo");
+    if (!liderData.cargoEmpresa) camposFaltantes.push("Cargo en la Empresa");
+    if (!liderData.sedeTrabajo) camposFaltantes.push("Sede de Trabajo");
+    if (!liderData.celular) camposFaltantes.push("Celular");
+    if (!liderData.correo) camposFaltantes.push("Correo");
+    if (requiereEconomia && !liderData.certificadoEconomiaSolidaria && !liderData.compromisoFirmado) {
+      camposFaltantes.push("Certificado o Compromiso");
+    }
+    if (requiereFormacion && !liderData.soporteFormacionAcademica) {
+      camposFaltantes.push("Soporte Formación Académica");
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -39,6 +56,23 @@ export function LiderForm({ tipoPostulacion, onLiderValidated }: LiderFormProps)
       </div>
 
       {isHabil && (
+        <>
+          {camposFaltantes.length > 0 && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <div className="text-yellow-700 mt-0.5">
+                  <p className="font-medium text-sm">Campos faltantes por completar:</p>
+                  <ul className="mt-2 space-y-1">
+                    {camposFaltantes.map((campo) => (
+                      <li key={campo} className="text-sm flex items-center gap-2">
+                        <span className="text-yellow-600">•</span> {campo}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
         <div className="space-y-6">
           {/* Nombre Completo */}
           <div>
@@ -220,23 +254,28 @@ export function LiderForm({ tipoPostulacion, onLiderValidated }: LiderFormProps)
             </div>
           </div>
         </div>
+        </>
       )}
 
-      {liderStatus === "NO_REGISTRADO" && (
-        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
-          <p className="text-sm text-yellow-800">
-            <strong>Atención:</strong> Esta cédula no está registrada como asociada. 
-            Por favor valida otra cédula.
-          </p>
-        </div>
-      )}
+      {liderStatus && liderStatus !== "HABIL" && (
+        <>
+          {liderStatus === "NO_REGISTRADO" && (
+            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-800">
+                <strong>Atención:</strong> Esta cédula no está registrada como asociada. 
+                Por favor valida otra cédula.
+              </p>
+            </div>
+          )}
 
-      {liderStatus === "INHABIL" && (
-        <div className="p-4 bg-red-50 border border-red-200 rounded-md">
-          <p className="text-sm text-red-800">
-            <strong>Atención:</strong> Esta cédula no es elegible para ser líder de una plancha.
-          </p>
-        </div>
+          {liderStatus === "INHABIL" && (
+            <div className="p-4 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-800">
+                <strong>Atención:</strong> Esta cédula no es elegible para ser líder de una plancha.
+              </p>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
