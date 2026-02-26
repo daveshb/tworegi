@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import Image from "next/image";
 import { useForm, FormProvider } from "react-hook-form";
+import type { FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CheckCircle, AlertCircle, Save } from "lucide-react";
 import { cn } from "@/lib/utils";
+import foncorLogo from "@/assets/imagen.png";
 import {
   postulacionJuntaSchema,
   postulacionControlSchema,
   postulacionApelacionesSchema,
-  IPostulacionJunta,
-  IPostulacionControl,
-  IPostulacionApelaciones,
   type IIntegrante,
 } from "@/lib/validators/postulacionesSchemas";
 import {
@@ -65,15 +65,15 @@ const POSTULACIONES: Record<TipoPostulacion, PostulacionConfig> = {
   },
 };
 
-type PostulacionFormType = IPostulacionJunta | IPostulacionControl | IPostulacionApelaciones;
-
 export default function NuevaPostulacionPage() {
   const [tipoPostulacion, setTipoPostulacion] = useState<TipoPostulacion | null>(null);
   const [currentStep, setCurrentStep] = useState(1); // 1: Líder, 2: Integrantes, 3: Declaraciones
   const [liderStatus, setLiderStatus] = useState<"HABIL" | "NO_REGISTRADO" | "INHABIL" | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [missingFields, setMissingFields] = useState<string[]>([]);
   const [postulacionId, setPostulacionId] = useState<string | null>(null);
 
   const config = tipoPostulacion ? POSTULACIONES[tipoPostulacion] : null;
@@ -102,15 +102,14 @@ export default function NuevaPostulacionPage() {
       tipoIntegrante: tipoPostulacion === "APELACIONES" ? "MIEMBRO" : "PRINCIPAL",
       adjuntoCedula: null,
       certificadoEconomiaSolidaria: null,
-      compromisoFirmado: null,
       soporteFormacionAcademica: null,
       asociadoStatus: null,
       motivoInhabilidad: "",
     },
     integrantes: [],
-    compromisosInstitucionales: false,
-    autorizacionAntecedentes: false,
-    responsabilidadLider: false,
+    compromisosInstitucionales: undefined,
+    autorizacionAntecedentes: undefined,
+    responsabilidadLider: undefined,
     estado: "DRAFT",
   };
 
@@ -121,7 +120,7 @@ export default function NuevaPostulacionPage() {
     defaultValues,
   });
 
-  const { handleSubmit, watch, formState: { isValid } } = methods;
+  const { handleSubmit, watch, getValues } = methods;
 
   const integrantes = watch("integrantes");
   const compromisosInstitucionales = watch("compromisosInstitucionales");
@@ -135,49 +134,52 @@ export default function NuevaPostulacionPage() {
       return integrante.tipoIntegrante === tipoEsperado;
     });
 
+  const hasUploadedFile = (value: unknown) => {
+    if (!value || typeof value !== "object") return false;
+    const file = value as Record<string, unknown>;
+    return Boolean(file.url) && Boolean(file.public_id);
+  };
+
   // Validar si el líder está habilitado (validado en cédula)
   const isLiderHabil = useMemo(() => {
-    return liderStatus === "HABIL";
-  }, [liderStatus]);
+    return liderStatus === "HABIL" || liderData?.asociadoStatus === "HABIL";
+  }, [liderStatus, liderData?.asociadoStatus]);
 
-  // Validar si el líder está completo (todos los campos llenos)
-  const isLiderComplete = useMemo(() => {
-    if (liderStatus !== "HABIL") return false;
-    
-    const requiereEconomia = config?.requiereEconomia ?? false;
-    const requiereFormacion = config?.requiereFormacion ?? false;
-
-    const baseCamposComplete = 
-      liderData.nombreCompleto &&
-      liderData.cargoEmpresa &&
-      liderData.sedeTrabajo &&
-      liderData.celular &&
-      liderData.correo &&
-      liderData.adjuntoCedula;
-
-    if (!baseCamposComplete) return false;
-
-    if (requiereEconomia) {
-      const tieneDocumentoEconomia = liderData.certificadoEconomiaSolidaria || liderData.compromisoFirmado;
-      if (!tieneDocumentoEconomia) return false;
+  const submitBlockers = useMemo(() => {
+    const blockers: string[] = [];
+    if (!config) {
+      blockers.push("Selecciona un tipo de postulación");
+      return blockers;
     }
 
-    if (requiereFormacion) {
-      if (!liderData.soporteFormacionAcademica) return false;
+    const requiereEconomia = config.requiereEconomia;
+    const requiereFormacion = config.requiereFormacion;
+
+    const estadoLider = liderData?.asociadoStatus || liderStatus;
+    if (estadoLider && estadoLider !== "HABIL") {
+      blockers.push("La cédula del líder debe estar habilitada");
     }
 
-    return true;
-  }, [liderStatus, liderData, config]);
-
-  // Validar que el formulario esté completo para enviar
-  const canSubmit = useMemo(() => {
-    if (!config) return false;
-    
-    // Verificar que el líder esté completamente lleno
-    if (!isLiderComplete) return false;
+    if (!liderData?.nombreCompleto) blockers.push("Líder: falta Nombre Completo");
+    if (!liderData?.cargoEmpresa) blockers.push("Líder: falta Cargo en la Empresa");
+    if (!liderData?.sedeTrabajo) blockers.push("Líder: falta Sede de Trabajo");
+    if (!liderData?.celular) blockers.push("Líder: falta Celular");
+    if (!liderData?.correo) blockers.push("Líder: falta Correo");
+    if (!hasUploadedFile(liderData?.adjuntoCedula)) {
+      blockers.push("Líder: falta cedulaPDF");
+    }
+    if (requiereEconomia && !hasUploadedFile(liderData?.certificadoEconomiaSolidaria)) {
+      blockers.push("Líder: falta Certificado Economía Solidaria (PDF)");
+    }
+    if (requiereFormacion && !hasUploadedFile(liderData?.soporteFormacionAcademica)) {
+      blockers.push("Líder: falta Soporte Formación Académica (PDF)");
+    }
 
     const totalIntegrantes = 1 + integrantes.length;
-    if (totalIntegrantes !== config.maxIntegrantes + 1) return false;
+    const totalEsperado = config.maxIntegrantes + 1;
+    if (totalIntegrantes !== totalEsperado) {
+      blockers.push(`Debe haber exactamente ${totalEsperado} integrantes (actual: ${totalIntegrantes})`);
+    }
 
     if (config.suplentesRequired) {
       const principalesIntegrantes = integrantes.filter(
@@ -193,37 +195,122 @@ export default function NuevaPostulacionPage() {
         (liderData.tipoIntegrante === "SUPLENTE" ? 1 : 0) +
         suplentesIntegrantes;
       if (principales !== config.principalesRequired || suplentes !== config.suplentesRequired) {
-        return false;
+        blockers.push(`La distribución debe ser ${config.principalesRequired} principales y ${config.suplentesRequired} suplentes`);
       }
     }
 
-    if (tipoPostulacion === "JUNTA_DIRECTIVA") {
-      if (liderData.tipoIntegrante !== "PRINCIPAL") return false;
-      if (!esSecuenciaJuntaValida(integrantes as IIntegrante[])) return false;
+    if (config.suplentesRequired) {
+      if (liderData.tipoIntegrante !== "PRINCIPAL") blockers.push("El líder debe ser principal");
+      if (!esSecuenciaJuntaValida(integrantes as IIntegrante[])) {
+        blockers.push("La secuencia debe alternar suplente/principal");
+      }
     }
 
-    if (!compromisosInstitucionales || !autorizacionAntecedentes || !responsabilidadLider) {
-      return false;
+    const integrantesIncompletos: number[] = [];
+    (integrantes as IIntegrante[]).forEach((integrante, idx) => {
+      const baseCompleto =
+        Boolean(integrante?.cedula) &&
+        Boolean(integrante?.nombreCompleto) &&
+        Boolean(integrante?.cargoEmpresa) &&
+        Boolean(integrante?.sedeTrabajo) &&
+        Boolean(integrante?.celular) &&
+        Boolean(integrante?.correo) &&
+        hasUploadedFile(integrante?.adjuntoCedula);
+
+      const economiaCompleta = !requiereEconomia || hasUploadedFile(integrante?.certificadoEconomiaSolidaria);
+      const formacionCompleta = !requiereFormacion || hasUploadedFile(integrante?.soporteFormacionAcademica);
+
+      if (!baseCompleto || !economiaCompleta || !formacionCompleta) {
+        integrantesIncompletos.push(idx + 2);
+      }
+    });
+    if (integrantesIncompletos.length > 0) {
+      blockers.push(`Faltan datos/documentos en integrante(s): ${integrantesIncompletos.join(", ")}`);
     }
 
-    return isValid;
+    if (!compromisosInstitucionales) blockers.push("Acepta la declaración de compromisos institucionales");
+    if (!autorizacionAntecedentes) blockers.push("Acepta la declaración de autorización de antecedentes");
+    if (!responsabilidadLider) blockers.push("Acepta la declaración de responsabilidad del líder");
+
+    return blockers;
   }, [
     config,
-    isLiderComplete,
     integrantes,
-    isValid,
     compromisosInstitucionales,
     autorizacionAntecedentes,
     responsabilidadLider,
-    liderData.tipoIntegrante,
-    tipoPostulacion,
+    liderStatus,
+    liderData,
   ]);
+
+  const canSubmit = submitBlockers.length === 0;
+
+  useEffect(() => {
+    if (!config || !error) return;
+
+    const expectedTotal = config.maxIntegrantes + 1;
+    const totalActual = 1 + integrantes.length;
+    const expectedMessage = `Debes tener exactamente ${expectedTotal} integrantes`;
+
+    if (error === expectedMessage && totalActual === expectedTotal) {
+      setError(null);
+    }
+  }, [config, error, integrantes.length]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
+    if (isSubmitting || isRedirecting) return;
+
     try {
       setIsSubmitting(true);
       setError(null);
+
+      const normalizeAdjunto = (adjunto: unknown) => {
+        if (!adjunto || typeof adjunto !== "object") return adjunto;
+        const file = adjunto as Record<string, unknown>;
+
+        const extensionFromName =
+          typeof file.original_filename === "string" && file.original_filename.includes(".")
+            ? file.original_filename.split(".").pop()?.toLowerCase()
+            : undefined;
+        const extensionFromPublicId =
+          typeof file.public_id === "string" && file.public_id.includes(".")
+            ? file.public_id.split(".").pop()?.toLowerCase()
+            : undefined;
+        const extensionFromUrl =
+          typeof file.url === "string" && file.url.includes(".")
+            ? file.url.split(".").pop()?.split("?")[0]?.toLowerCase()
+            : undefined;
+
+        return {
+          ...file,
+          format:
+            file.format ||
+            extensionFromName ||
+            extensionFromPublicId ||
+            extensionFromUrl ||
+            "pdf",
+        };
+      };
+
+      const payload = {
+        ...data,
+        estado: "ENVIADA",
+        lider: {
+          ...data.lider,
+          adjuntoCedula: normalizeAdjunto(data?.lider?.adjuntoCedula),
+          certificadoEconomiaSolidaria: normalizeAdjunto(data?.lider?.certificadoEconomiaSolidaria),
+          soporteFormacionAcademica: normalizeAdjunto(data?.lider?.soporteFormacionAcademica),
+        },
+        integrantes: Array.isArray(data.integrantes)
+          ? (data.integrantes as Array<Record<string, unknown>>).map((integrante) => ({
+              ...integrante,
+              adjuntoCedula: normalizeAdjunto(integrante?.adjuntoCedula),
+              certificadoEconomiaSolidaria: normalizeAdjunto(integrante?.certificadoEconomiaSolidaria),
+              soporteFormacionAcademica: normalizeAdjunto(integrante?.soporteFormacionAcademica),
+            }))
+          : [],
+      };
 
       // Determinar endpoint según tipo
       const endpoint = `
@@ -241,19 +328,46 @@ export default function NuevaPostulacionPage() {
       const response = await fetch(endpoint, {
         method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, estado: "ENVIADA" }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Error guardando postulación");
+        let errorMessage = "Error guardando postulación";
+        const contentType = response.headers.get("content-type") || "";
+
+        if (contentType.includes("application/json")) {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } else {
+          const rawError = await response.text();
+          if (rawError.includes("<!DOCTYPE")) {
+            errorMessage = "Error interno del servidor al guardar la postulación";
+          } else if (rawError.trim()) {
+            errorMessage = rawError;
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
       const result = await response.json();
       setPostulacionId(result._id);
+      setError(null);
+      setMissingFields([]);
       setSaveSuccess(true);
+      setIsRedirecting(true);
 
-      setTimeout(() => setSaveSuccess(false), 3000);
+      setTimeout(() => {
+        setTipoPostulacion(null);
+        setCurrentStep(1);
+        setLiderStatus(null);
+        setPostulacionId(null);
+        setMissingFields([]);
+        setError(null);
+        setSaveSuccess(false);
+        setIsRedirecting(false);
+        methods.reset(defaultValues);
+      }, 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -261,11 +375,125 @@ export default function NuevaPostulacionPage() {
     }
   };
 
+  const onInvalidSubmit = (invalidErrors: FieldErrors) => {
+    const data = getValues() as Record<string, unknown>;
+    const faltantes: string[] = [];
+
+    const pushIfMissing = (condition: boolean, label: string) => {
+      if (condition) faltantes.push(label);
+    };
+
+    const lider = (data.lider as Record<string, unknown>) || {};
+
+    const liderCedulaNumero = typeof lider.cedula === "string" ? lider.cedula.trim() : "";
+
+    pushIfMissing(!liderCedulaNumero, "Líder: Cédula (número)");
+    pushIfMissing(!lider.nombreCompleto, "Líder: Nombre Completo");
+    pushIfMissing(!lider.cargoEmpresa, "Líder: Cargo en la Empresa");
+    pushIfMissing(!lider.sedeTrabajo, "Líder: Sede de Trabajo");
+    pushIfMissing(!lider.celular, "Líder: Celular");
+    pushIfMissing(!lider.correo, "Líder: Correo");
+    pushIfMissing(!hasUploadedFile(lider.adjuntoCedula), "Líder: cedulaPDF (archivo Cédula PDF)");
+
+    if (config?.requiereEconomia) {
+      pushIfMissing(!hasUploadedFile(lider.certificadoEconomiaSolidaria), "Líder: Certificado Economía Solidaria (PDF)");
+    }
+    if (config?.requiereFormacion) {
+      pushIfMissing(!hasUploadedFile(lider.soporteFormacionAcademica), "Líder: Soporte Formación Académica (PDF)");
+    }
+
+    const integrantesActuales = Array.isArray(data.integrantes)
+      ? (data.integrantes as Array<Record<string, unknown>>)
+      : [];
+    integrantesActuales.forEach((integrante, index: number) => {
+      const n = index + 2;
+      const cedulaNumero = typeof integrante?.cedula === "string" ? integrante.cedula.trim() : "";
+      pushIfMissing(!cedulaNumero, `Integrante ${n}: Cédula (número)`);
+      pushIfMissing(!integrante?.nombreCompleto, `Integrante ${n}: Nombre Completo`);
+      pushIfMissing(!integrante?.cargoEmpresa, `Integrante ${n}: Cargo en la Empresa`);
+      pushIfMissing(!integrante?.sedeTrabajo, `Integrante ${n}: Sede de Trabajo`);
+      pushIfMissing(!integrante?.celular, `Integrante ${n}: Celular`);
+      pushIfMissing(!integrante?.correo, `Integrante ${n}: Correo`);
+      pushIfMissing(!hasUploadedFile(integrante?.adjuntoCedula), `Integrante ${n}: cedulaPDF (archivo Cédula PDF)`);
+
+      if (config?.requiereEconomia) {
+        pushIfMissing(!hasUploadedFile(integrante?.certificadoEconomiaSolidaria), `Integrante ${n}: Certificado Economía Solidaria (PDF)`);
+      }
+      if (config?.requiereFormacion) {
+        pushIfMissing(!hasUploadedFile(integrante?.soporteFormacionAcademica), `Integrante ${n}: Soporte Formación Académica (PDF)`);
+      }
+    });
+
+    pushIfMissing(!data.compromisosInstitucionales, "Declaración: Compromisos institucionales (Sí)");
+    pushIfMissing(!data.autorizacionAntecedentes, "Declaración: Autorización de antecedentes (Sí)");
+    pushIfMissing(!data.responsabilidadLider, "Declaración: Responsabilidad del líder (Sí)");
+
+    const totalEsperado = (config?.maxIntegrantes ?? 0) + 1;
+    const totalActual = 1 + integrantesActuales.length;
+    if (config && totalActual !== totalEsperado) {
+      faltantes.unshift(`Cantidad de integrantes: ${totalActual}/${totalEsperado}`);
+    }
+
+    const flattenErrors = (
+      errors: Record<string, unknown>,
+      parentPath = ""
+    ): string[] => {
+      const items: string[] = [];
+
+      Object.entries(errors).forEach(([key, value]) => {
+        const currentPath = parentPath ? `${parentPath}.${key}` : key;
+
+        if (!value || typeof value !== "object") return;
+
+        const entry = value as Record<string, unknown>;
+        const message = entry.message;
+        if (typeof message === "string" && message.trim()) {
+          items.push(`${currentPath}: ${message}`);
+        }
+
+        const nested = Object.fromEntries(
+          Object.entries(entry).filter(([nestedKey, nestedValue]) => {
+            return nestedKey !== "message" && nestedValue && typeof nestedValue === "object";
+          })
+        );
+
+        if (Object.keys(nested).length > 0) {
+          items.push(...flattenErrors(nested, currentPath));
+        }
+      });
+
+      return items;
+    };
+
+    const erroresValidador = flattenErrors(invalidErrors as Record<string, unknown>);
+    if (faltantes.length === 0 && erroresValidador.length > 0) {
+      faltantes.push(...erroresValidador);
+    }
+    if (faltantes.length === 0) {
+      faltantes.push("Revisa los campos en rojo del formulario.");
+    }
+
+    setMissingFields(faltantes);
+    const firstMissing = faltantes[0] || "";
+    if (firstMissing.startsWith("Líder:")) setCurrentStep(1);
+    else if (firstMissing.startsWith("Integrante") || firstMissing.startsWith("Cantidad de integrantes")) setCurrentStep(2);
+    else setCurrentStep(3);
+
+    setError("Hay campos pendientes o inválidos. Completa los campos marcados abajo.");
+    setSaveSuccess(false);
+  };
+
   if (!tipoPostulacion) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
         <div className="max-w-4xl mx-auto px-4 py-12">
           <div className="text-center mb-12">
+            <Image
+              src={foncorLogo}
+              alt="Logo Foncor"
+              className="h-20 w-auto mx-auto mb-6"
+              priority
+            />
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
               Nueva Postulación
             </h1>
@@ -305,6 +533,12 @@ export default function NuevaPostulacionPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
+          <Image
+            src={foncorLogo}
+            alt="Logo Foncor"
+            className="h-16 w-auto mb-4"
+            priority
+          />
           <button
             onClick={() => {
               setTipoPostulacion(null);
@@ -364,7 +598,7 @@ export default function NuevaPostulacionPage() {
 
         {/* Formulario */}
         <FormProvider {...methods}>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+          <form onSubmit={handleSubmit(onSubmit, onInvalidSubmit)} className="space-y-8">
             {/* Paso 1: Líder */}
             {currentStep === 1 && (
               <div className="bg-white rounded-lg shadow p-8">
@@ -416,17 +650,16 @@ export default function NuevaPostulacionPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      setError(null);
                       const totalIntegrantes = 1 + integrantes.length;
                       if (totalIntegrantes === config.maxIntegrantes + 1) {
-                        if (
-                          tipoPostulacion === "JUNTA_DIRECTIVA" &&
-                          !esSecuenciaJuntaValida(integrantes as IIntegrante[])
-                        ) {
+                        if (config.suplentesRequired && !esSecuenciaJuntaValida(integrantes as IIntegrante[])) {
                           setError(
-                            "La secuencia de Junta debe ser: líder principal, luego suplente/principal alternados"
+                            "La secuencia debe ser: líder principal, luego suplente/principal alternados"
                           );
                           return;
                         }
+                        setError(null);
                         setCurrentStep(3);
                       } else {
                         setError(`Debes tener exactamente ${config.maxIntegrantes + 1} integrantes`);
@@ -478,13 +711,28 @@ export default function NuevaPostulacionPage() {
                     </button>
                     <button
                       type="submit"
-                      disabled={!canSubmit || isSubmitting}
+                      disabled={!canSubmit || isSubmitting || isRedirecting}
                       className="flex-1 px-6 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Save className="w-4 h-4" />
-                      {isSubmitting ? "Guardando..." : "Guardar"}
+                      {isSubmitting
+                        ? "Guardando..."
+                        : isRedirecting
+                        ? "Redirigiendo..."
+                        : "Guardar"}
                     </button>
                   </div>
+
+                  {!canSubmit && (
+                    <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <p className="text-sm font-medium text-yellow-900 mb-2">Para habilitar Guardar, falta:</p>
+                      <ul className="list-disc pl-5 text-sm text-yellow-800 space-y-1">
+                        {submitBlockers.slice(0, 8).map((item) => (
+                          <li key={item}>{item}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -494,20 +742,28 @@ export default function NuevaPostulacionPage() {
         {/* Mensajes */}
         {saveSuccess && (
           <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-md flex items-start gap-3">
-            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium text-green-900">¡Guardado exitosamente!</p>
               <p className="text-sm text-green-800">Tu postulación fue guardada correctamente</p>
+              <p className="text-sm text-green-800">Serás redirigido al inicio en 5 segundos...</p>
             </div>
           </div>
         )}
 
         {error && (
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-md flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <AlertCircle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
             <div>
               <p className="font-medium text-red-900">Error</p>
               <p className="text-sm text-red-800">{error}</p>
+              {missingFields.length > 0 && (
+                <ul className="mt-2 list-disc pl-5 text-sm text-red-800 space-y-1">
+                  {missingFields.slice(0, 12).map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         )}

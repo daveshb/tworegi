@@ -15,6 +15,12 @@ export function LiderForm({ tipoPostulacion, onLiderValidated }: LiderFormProps)
   const liderData = watch("lider");
   const isHabil = liderStatus === "HABIL";
 
+  const hasUploadedFile = (value: unknown) => {
+    if (!value || typeof value !== "object") return false;
+    const file = value as Record<string, unknown>;
+    return Boolean(file.url) && Boolean(file.public_id);
+  };
+
   const requiereEconomia = tipoPostulacion !== "APELACIONES";
   const requiereFormacion = tipoPostulacion === "JUNTA_DIRECTIVA";
 
@@ -26,10 +32,13 @@ export function LiderForm({ tipoPostulacion, onLiderValidated }: LiderFormProps)
     if (!liderData.sedeTrabajo) camposFaltantes.push("Sede de Trabajo");
     if (!liderData.celular) camposFaltantes.push("Celular");
     if (!liderData.correo) camposFaltantes.push("Correo");
-    if (requiereEconomia && !liderData.certificadoEconomiaSolidaria && !liderData.compromisoFirmado) {
-      camposFaltantes.push("Certificado o Compromiso");
+    if (!hasUploadedFile(liderData.adjuntoCedula)) {
+      camposFaltantes.push("cedulaPDF (Cédula PDF)");
     }
-    if (requiereFormacion && !liderData.soporteFormacionAcademica) {
+    if (requiereEconomia && !hasUploadedFile(liderData.certificadoEconomiaSolidaria)) {
+      camposFaltantes.push("Certificado Economía Solidaria");
+    }
+    if (requiereFormacion && !hasUploadedFile(liderData.soporteFormacionAcademica)) {
       camposFaltantes.push("Soporte Formación Académica");
     }
   }
@@ -82,12 +91,13 @@ export function LiderForm({ tipoPostulacion, onLiderValidated }: LiderFormProps)
             <input
               id="lider-nombre"
               type="text"
-              placeholder="Tu nombre completo"
+              placeholder="Nombre desde base de datos"
               {...register("lider.nombreCompleto", {
                 required: "Nombre es requerido",
                 minLength: { value: 3, message: "Nombre mínimo 3 caracteres" },
               })}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+              readOnly
+              className="w-full px-4 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-700 cursor-not-allowed"
               aria-describedby={(errors.lider as any)?.nombreCompleto ? "lider-nombre-error" : undefined}
             />
             {(errors.lider as any)?.nombreCompleto && (
@@ -220,20 +230,9 @@ export function LiderForm({ tipoPostulacion, onLiderValidated }: LiderFormProps)
 
               {requiereEconomia && (
                 <>
-                  <div className="text-sm text-gray-600 font-medium">
-                    Selecciona uno de los siguientes:
-                  </div>
                   <FileUpload
                     name="lider.certificadoEconomiaSolidaria"
                     label="Certificado Economía Solidaria (PDF)"
-                    accept="application/pdf"
-                    resourceType="raw"
-                    helpText="Documento máximo 10MB"
-                  />
-
-                  <FileUpload
-                    name="lider.compromisoFirmado"
-                    label="Compromiso Firmado (PDF)"
                     accept="application/pdf"
                     resourceType="raw"
                     helpText="Documento máximo 10MB"

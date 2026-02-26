@@ -69,6 +69,11 @@ export function CedulaValidation({ onCedulaValidated, isLider = false, fieldName
         });
       }
 
+      if (parentField) {
+        setValue(`${parentField}.asociadoStatus`, data.asociadoStatus);
+        setValue(`${parentField}.motivoInhabilidad`, data.motivoInhabilidad || "");
+      }
+
       if (onCedulaValidated) {
         onCedulaValidated(cedula, data.asociadoStatus, data);
       }
@@ -130,14 +135,14 @@ export function CedulaValidation({ onCedulaValidated, isLider = false, fieldName
 
         {fieldError && (
           <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
-            <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+            <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
             <span id={`${fieldName}-error`} className="text-sm text-red-700">{fieldError}</span>
           </div>
         )}
 
         {validationError && (
           <div className="flex items-start gap-2 mt-2 p-2 bg-red-50 border border-red-200 rounded-md">
-            <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+            <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
             <span className="text-sm text-red-700">{validationError}</span>
           </div>
         )}
@@ -155,9 +160,9 @@ export function CedulaValidation({ onCedulaValidated, isLider = false, fieldName
           )}
         >
           {validationStatus === "HABIL" ? (
-            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
+            <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
           ) : (
-            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" />
+            <AlertTriangle className="w-5 h-5 text-red-600 mt-0.5 shrink-0" />
           )}
           <div className="flex-1">
             <p

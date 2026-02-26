@@ -16,7 +16,6 @@ export interface IIntegrante {
   // Documentos requeridos
   adjuntoCedula: IArchivoAdjunto;
   certificadoEconomiaSolidaria?: IArchivoAdjunto; // Junta y Control Social
-  compromisoFirmado?: IArchivoAdjunto; // Alternativa a economía solidaria
   soporteFormacionAcademica?: IArchivoAdjunto; // Solo Junta Directiva
   
   // Estado de validación
@@ -76,10 +75,6 @@ export const integranteSchema = new Schema<IIntegrante>(
       required: [true, "Adjunto de cédula es requerido"],
     },
     certificadoEconomiaSolidaria: {
-      type: archivoAdjuntoSchema,
-      required: false,
-    },
-    compromisoFirmado: {
       type: archivoAdjuntoSchema,
       required: false,
     },
