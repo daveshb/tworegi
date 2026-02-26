@@ -1,4 +1,4 @@
-import { Schema, model, Model } from "mongoose";
+import { Schema, model, models, Model } from "mongoose";
 import { integranteSchema, IIntegrante } from "./integrante";
 
 export type EstadoPostulacion = "DRAFT" | "ENVIADA";
@@ -128,7 +128,5 @@ postulacionJuntaSchema.pre("save", function (next) {
 });
 
 export const PostulacionJunta: Model<IPostulacionJunta> =
-  model<IPostulacionJunta>(
-    "postulaciones_junta_directiva",
-    postulacionJuntaSchema
-  );
+  (models.postulaciones_junta_directiva as Model<IPostulacionJunta>) ||
+  model<IPostulacionJunta>("postulaciones_junta_directiva", postulacionJuntaSchema);

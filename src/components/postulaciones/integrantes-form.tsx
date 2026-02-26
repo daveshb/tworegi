@@ -28,10 +28,18 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
   const requiereEconomia = tipoPostulacion !== "APELACIONES";
   const requiereFormacion = tipoPostulacion === "JUNTA_DIRECTIVA";
   const esJuntaDirectiva = tipoPostulacion === "JUNTA_DIRECTIVA";
+  const usaSecuenciaSuplentes =
+    tipoPostulacion === "JUNTA_DIRECTIVA" || tipoPostulacion === "CONTROL_SOCIAL";
+
+  const hasUploadedFile = (value: unknown) => {
+    if (!value || typeof value !== "object") return false;
+    const file = value as Record<string, unknown>;
+    return Boolean(file.url) && Boolean(file.public_id);
+  };
 
   const getTipoIntegranteAutomatico = (index: number) => {
-    // En Junta: posición 1 es líder (principal), la posición 2 inicia en suplente y alterna.
-    if (esJuntaDirectiva) {
+    // En Junta y Control: posición 1 es líder (principal), la posición 2 inicia en suplente y alterna.
+    if (usaSecuenciaSuplentes) {
       return index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
     }
     if (tipoPostulacion === "APELACIONES") {
@@ -42,7 +50,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
 
   const getTituloIntegrante = (index: number) => {
     const numeroIntegrante = index + 2;
-    if (!esJuntaDirectiva) return `Integrante ${numeroIntegrante}`;
+    if (!usaSecuenciaSuplentes) return `Integrante ${numeroIntegrante}`;
 
     const tipo = getTipoIntegranteAutomatico(index);
     if (tipo === "SUPLENTE") {
@@ -65,7 +73,6 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
         tipoIntegrante: getTipoIntegranteAutomatico(nextIndex),
         adjuntoCedula: null,
         certificadoEconomiaSolidaria: null,
-        compromisoFirmado: null,
         soporteFormacionAcademica: null,
         asociadoStatus: null,
         motivoInhabilidad: "",
@@ -74,7 +81,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
   };
 
   useEffect(() => {
-    if (!esJuntaDirectiva) return;
+    if (!usaSecuenciaSuplentes) return;
 
     integrantes.forEach((_: unknown, index: number) => {
       const tipoEsperado = index % 2 === 0 ? "SUPLENTE" : "PRINCIPAL";
@@ -82,7 +89,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
         shouldDirty: true,
       });
     });
-  }, [integrantes, esJuntaDirectiva, setValue]);
+  }, [integrantes, usaSecuenciaSuplentes, setValue]);
 
   const getTipoOptions = () => {
     if (tipoPostulacion === "APELACIONES") {
@@ -98,25 +105,9 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900">
-          Integrantes {1 + fields.length}/{maxIntegrantes + 1}
-        </h3>
-        <button
-          type="button"
-          onClick={handleAddIntegrante}
-          disabled={!canAddMore}
-          className={cn(
-            "flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors",
-            canAddMore
-              ? "bg-blue-600 text-white hover:bg-blue-700"
-              : "bg-gray-100 text-gray-400 cursor-not-allowed"
-          )}
-        >
-          <Plus className="w-4 h-4" />
-          Agregar integrante
-        </button>
-      </div>
+      <h3 className="text-lg font-semibold text-gray-900">
+        Integrantes {1 + fields.length}/{maxIntegrantes + 1}
+      </h3>
 
       {fields.length === 0 && (
         <p className="text-sm text-gray-500 text-center py-8">
@@ -124,9 +115,9 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
         </p>
       )}
 
-      {esJuntaDirectiva && (
+      {usaSecuenciaSuplentes && (
         <div className="p-3 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800">
-          Secuencia automática Junta Directiva: #1 líder (principal), #2 suplente, #3 principal, #4 suplente...
+          Secuencia automática: #1 líder (principal), #2 suplente, #3 principal, #4 suplente...
         </div>
       )}
 
@@ -134,19 +125,94 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
         <h4 className="text-base font-semibold text-green-900 mb-2">
           Integrante 1 (Líder - {tipoPostulacion === "APELACIONES" ? "Miembro" : "Principal"})
         </h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-green-800">
-          <p>
-            <span className="font-medium">Cédula:</span> {lider?.cedula || "Pendiente"}
-          </p>
-          <p>
-            <span className="font-medium">Nombre:</span> {lider?.nombreCompleto || "Pendiente"}
-          </p>
-          <p>
-            <span className="font-medium">Cargo:</span> {lider?.cargoEmpresa || "Pendiente"}
-          </p>
-          <p>
-            <span className="font-medium">Correo:</span> {lider?.correo || "Pendiente"}
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-green-900 mb-1">
+              Cédula<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={lider?.cedula || ""}
+              readOnly
+              className="w-full px-3 py-2 border border-green-300 rounded-md text-sm bg-green-100 text-green-900 cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-green-900 mb-1">
+              Nombre Completo<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={lider?.nombreCompleto || ""}
+              readOnly
+              className="w-full px-3 py-2 border border-green-300 rounded-md text-sm bg-green-100 text-green-900 cursor-not-allowed"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-green-900 mb-1">
+              Cargo en la Empresa<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Ej: Gerente, Analista"
+              {...control.register("lider.cargoEmpresa" as const, {
+                required: "Cargo es requerido",
+              })}
+              className="w-full px-3 py-2 border border-green-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-green-900 mb-1">
+              Sede de Trabajo<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Bogotá, Medellín, etc"
+              {...control.register("lider.sedeTrabajo" as const, {
+                required: "Sede es requerida",
+              })}
+              className="w-full px-3 py-2 border border-green-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-green-900 mb-1">
+              Celular<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="tel"
+              placeholder="3001234567"
+              {...control.register("lider.celular" as const, {
+                required: "Celular es requerido",
+                pattern: {
+                  value: /^\d{7,20}$/,
+                  message: "Celular debe contener solo números",
+                },
+              })}
+              className="w-full px-3 py-2 border border-green-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-green-900 mb-1">
+              Correo<span className="text-red-500">*</span>
+            </label>
+            <input
+              type="email"
+              placeholder="correo@ejemplo.com"
+              {...control.register("lider.correo" as const, {
+                required: "Correo es requerido",
+                pattern: {
+                  value: /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+                  message: "Correo inválido",
+                },
+              })}
+              className="w-full px-3 py-2 border border-green-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500 bg-white"
+            />
+          </div>
         </div>
 
         <div className="mt-4 pt-4 border-t border-green-200 space-y-4">
@@ -163,20 +229,9 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
 
           {requiereEconomia && (
             <>
-              <div className="text-sm text-green-800 font-medium">
-                Selecciona uno de los siguientes:
-              </div>
               <FileUpload
                 name={"lider.certificadoEconomiaSolidaria" as never}
                 label="Certificado Economía Solidaria (PDF)"
-                accept="application/pdf"
-                resourceType="raw"
-                helpText="Documento máximo 10MB"
-              />
-
-              <FileUpload
-                name={"lider.compromisoFirmado" as never}
-                label="Compromiso Firmado (PDF)"
                 accept="application/pdf"
                 resourceType="raw"
                 helpText="Documento máximo 10MB"
@@ -205,6 +260,25 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
         )?.[index];
         const integranteStatus = integrantes?.[index]?.asociadoStatus;
         const isHabil = integranteStatus === "HABIL";
+        const integranteData = integrantes?.[index] as Record<string, unknown> | undefined;
+        const camposFaltantes: string[] = [];
+
+        if (isHabil) {
+          if (!integranteData?.nombreCompleto) camposFaltantes.push("Nombre Completo");
+          if (!integranteData?.cargoEmpresa) camposFaltantes.push("Cargo en la Empresa");
+          if (!integranteData?.sedeTrabajo) camposFaltantes.push("Sede de Trabajo");
+          if (!integranteData?.celular) camposFaltantes.push("Celular");
+          if (!integranteData?.correo) camposFaltantes.push("Correo");
+          if (!hasUploadedFile(integranteData?.adjuntoCedula)) {
+            camposFaltantes.push("cedulaPDF (Cédula PDF)");
+          }
+          if (requiereEconomia && !hasUploadedFile(integranteData?.certificadoEconomiaSolidaria)) {
+            camposFaltantes.push("Certificado Economía Solidaria");
+          }
+          if (requiereFormacion && !hasUploadedFile(integranteData?.soporteFormacionAcademica)) {
+            camposFaltantes.push("Soporte Formación Académica");
+          }
+        }
 
         return (
           <div
@@ -232,11 +306,10 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                   fieldName={`integrantes.${index}.cedula`}
                   parentField={`integrantes.${index}`}
                   onCedulaValidated={(cedula, status) => {
-                    // Actualizar estado de validación en el formulario
-                    const field = integrantes[index];
-                    if (field) {
-                      field.asociadoStatus = status;
-                    }
+                    setValue(`integrantes.${index}.asociadoStatus`, status, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
                   }}
                 />
               </div>
@@ -244,6 +317,23 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
               {/* Mostrar campos solo si está habilitado */}
               {isHabil && (
                 <>
+                  {camposFaltantes.length > 0 && (
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <div className="text-yellow-700 mt-0.5">
+                          <p className="font-medium text-sm">Campos faltantes por completar:</p>
+                          <ul className="mt-2 space-y-1">
+                            {camposFaltantes.map((campo) => (
+                              <li key={campo} className="text-sm flex items-center gap-2">
+                                <span className="text-yellow-600">•</span> {campo}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Nombre Completo */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -251,11 +341,12 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                     </label>
                     <input
                       type="text"
-                      placeholder="Nombre completo"
+                      placeholder="Nombre desde base de datos"
                       {...control.register(`integrantes.${index}.nombreCompleto` as const, {
                         required: "Nombre es requerido",
                       })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-blue-500 focus:border-blue-500"
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-gray-100 text-gray-700 cursor-not-allowed"
                       aria-describedby={fieldError?.nombreCompleto ? `integrantes-${index}-nombre-error` : undefined}
                     />
                     {fieldError?.nombreCompleto && (
@@ -338,7 +429,7 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Rol<span className="text-red-500">*</span>
                     </label>
-                    {esJuntaDirectiva ? (
+                    {usaSecuenciaSuplentes ? (
                       <input
                         type="text"
                         value={getTipoIntegranteAutomatico(index) === "SUPLENTE" ? "Suplente" : "Principal"}
@@ -377,20 +468,9 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
 
                     {requiereEconomia && (
                       <>
-                        <div className="text-sm text-gray-600 font-medium">
-                          Selecciona uno de los siguientes:
-                        </div>
                         <FileUpload
                           name={`integrantes.${index}.certificadoEconomiaSolidaria` as never}
                           label="Certificado Economía Solidaria (PDF)"
-                          accept="application/pdf"
-                          resourceType="raw"
-                          helpText="Documento máximo 10MB"
-                        />
-
-                        <FileUpload
-                          name={`integrantes.${index}.compromisoFirmado` as never}
-                          label="Compromiso Firmado (PDF)"
                           accept="application/pdf"
                           resourceType="raw"
                           helpText="Documento máximo 10MB"
@@ -435,6 +515,23 @@ export function IntegrantesForm({ tipoPostulacion, maxIntegrantes }: IntegrantFo
           </div>
         );
       })}
+
+      <div className="pt-2">
+        <button
+          type="button"
+          onClick={handleAddIntegrante}
+          disabled={!canAddMore}
+          className={cn(
+            "w-full flex items-center justify-center gap-2 px-4 py-3 rounded-md text-sm font-medium transition-colors",
+            canAddMore
+              ? "bg-blue-600 text-white hover:bg-blue-700"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+          )}
+        >
+          <Plus className="w-4 h-4" />
+          Agregar integrante
+        </button>
+      </div>
     </div>
   );
 }

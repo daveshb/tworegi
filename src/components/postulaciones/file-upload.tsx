@@ -98,15 +98,28 @@ export function FileUpload<T extends Record<string, unknown>>({
 
         const uploadResult = await uploadResponse.json();
 
+        const extensionFromName = file.name.includes(".")
+          ? file.name.split(".").pop()?.toLowerCase()
+          : undefined;
+        const extensionFromPublicId =
+          typeof uploadResult.public_id === "string" && uploadResult.public_id.includes(".")
+            ? uploadResult.public_id.split(".").pop()?.toLowerCase()
+            : undefined;
+        const mimeSubtype = file.type.includes("/")
+          ? file.type.split("/")[1]?.toLowerCase()
+          : undefined;
+        const safeFormat =
+          uploadResult.format || extensionFromName || extensionFromPublicId || mimeSubtype || "pdf";
+
         // Extraer metadata
         const metadata: FileMetadata = {
           url: uploadResult.secure_url,
           public_id: uploadResult.public_id,
           bytes: uploadResult.bytes,
-          format: uploadResult.format,
+          format: safeFormat,
           original_filename: uploadResult.original_filename,
           resource_type: resourceType,
-          createdAt: new Date(),
+          createdAt: uploadResult.created_at ? new Date(uploadResult.created_at) : new Date(),
         };
 
         // Actualizar formulario
@@ -201,14 +214,14 @@ export function FileUpload<T extends Record<string, unknown>>({
 
           {uploadError && (
             <div id={`${name}-error`} className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
               <span className="text-sm text-red-700">{uploadError}</span>
             </div>
           )}
 
           {fieldError && (
             <div id={`${name}-error`} className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
-              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+              <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 shrink-0" />
               <span className="text-sm text-red-700">{fieldError}</span>
             </div>
           )}

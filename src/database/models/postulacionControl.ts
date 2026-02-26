@@ -1,4 +1,4 @@
-import { Schema, model, Model } from "mongoose";
+import { Schema, model, models, Model } from "mongoose";
 import { integranteSchema, IIntegrante } from "./integrante";
 
 export type EstadoPostulacion = "DRAFT" | "ENVIADA";
@@ -110,7 +110,5 @@ postulacionControlSchema.pre("save", function (next) {
 });
 
 export const PostulacionControl: Model<IPostulacionControl> =
-  model<IPostulacionControl>(
-    "postulaciones_control_social",
-    postulacionControlSchema
-  );
+  (models.postulaciones_control_social as Model<IPostulacionControl>) ||
+  model<IPostulacionControl>("postulaciones_control_social", postulacionControlSchema);

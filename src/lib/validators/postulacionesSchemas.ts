@@ -5,10 +5,13 @@ export const archivoAdjuntoSchema = z.object({
   url: z.string().url("URL debe ser válida"),
   public_id: z.string().min(1, "Public ID es requerido"),
   bytes: z.number().positive("Tamaño debe ser positivo"),
-  format: z.string().min(1, "Formato es requerido"),
+  format: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() ? value : "pdf"),
+    z.string().min(1, "Formato es requerido")
+  ),
   original_filename: z.string().min(1, "Nombre de archivo es requerido"),
   resource_type: z.enum(["raw", "image"]),
-  createdAt: z.date().optional(),
+  createdAt: z.coerce.date().optional(),
 });
 
 export type IArchivoAdjunto = z.infer<typeof archivoAdjuntoSchema>;
@@ -40,9 +43,14 @@ export const integranteSchema = z.object({
   correo: z.string().email("Correo debe ser válido"),
   tipoIntegrante: z.enum(["PRINCIPAL", "SUPLENTE", "MIEMBRO"]),
   adjuntoCedula: archivoAdjuntoSchema,
-  certificadoEconomiaSolidaria: archivoAdjuntoSchema.optional(),
-  compromisoFirmado: archivoAdjuntoSchema.optional(),
-  soporteFormacionAcademica: archivoAdjuntoSchema.optional(),
+  certificadoEconomiaSolidaria: z.preprocess(
+    (value) => (value === null ? undefined : value),
+    archivoAdjuntoSchema.optional()
+  ),
+  soporteFormacionAcademica: z.preprocess(
+    (value) => (value === null ? undefined : value),
+    archivoAdjuntoSchema.optional()
+  ),
   asociadoStatus: z.enum(["HABIL", "NO_REGISTRADO", "INHABIL"]),
   motivoInhabilidad: z.string().optional(),
 });
