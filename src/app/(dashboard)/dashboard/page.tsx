@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Vote, Users, BarChart3, LogOut, Loader2 } from "lucide-react";
+import { Vote, Users, BarChart3, LogOut, Loader2, ClipboardList } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type DashboardStats = {
@@ -147,6 +147,10 @@ export default function DashboardPage() {
           <Button variant="outline" onClick={() => router.push('/reports')} className="cursor-pointer h-12 px-6 text-lg">
             <BarChart3 className="w-5 h-5 mr-2" />
             Ver Reportes
+          </Button>
+          <Button variant="outline" onClick={() => router.push('/dashboard/postulaciones')} className="cursor-pointer h-12 px-6 text-lg">
+            <ClipboardList className="w-5 h-5 mr-2" />
+            Ver Postulaciones
           </Button>
           <Button variant="outline" onClick={() => router.push('/associates')} className="cursor-pointer h-12 px-6 text-lg">
             <Users className="w-5 h-5 mr-2" />
